@@ -9,3 +9,7 @@ __pycache__/
 # Ignore virtual environments
 .venv/
 env/
+
+# Ignore Node.js tracking modules
+backend/node_modules/
+node_modules/
