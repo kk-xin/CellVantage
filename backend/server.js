@@ -2,6 +2,7 @@ const express = require('express');        // Import Express framework
 const cors = require('cors');              // Allow React frontend to call this API
 require('dotenv').config();               // Load .env variables
 
+const authRouter = require('./routes/auth');         // Authentication routes
 const cellsRouter = require('./routes/cells');       // Cells routes
 const batchesRouter = require('./routes/batches');   // Batches routes
 const auditRouter = require('./routes/audit');       // Audit logs routes
@@ -14,6 +15,7 @@ app.use(cors());                    // Allow cross-origin requests from React
 app.use(express.json());            // Parse incoming JSON request bodies
 
 // ── Routes ─────────────────────────────────────────────
+app.use('/api/auth', authRouter);
 app.use('/api/cells', cellsRouter);
 app.use('/api/batches', batchesRouter);
 app.use('/api/audit', auditRouter);

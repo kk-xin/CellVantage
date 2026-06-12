@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(50) NOT NULL UNIQUE COMMENT 'Login username (e.g., zkx1234)', -- Automatically indexed (UNIQUE)
   password_hash VARCHAR(255) NOT NULL COMMENT 'Bcrypt hashed password value',
   email VARCHAR(100) COMMENT 'Employee email address',
-  role ENUM('admin', 'lab_operator', 'warehouse_staff', 'quality_engineer', 'system') NOT NULL DEFAULT 'lab_operator' COMMENT 'Role-based access control permissions',
+  role ENUM('admin', 'lab_operator', 'warehouse_staff', 'quality_engineer', 'system') NOT NULL DEFAULT 'system' COMMENT 'Role-based access control permissions',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Account creation timestamp',
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last account update timestamp',
   is_active BOOLEAN DEFAULT TRUE COMMENT 'Flag to indicate if the account is active',
