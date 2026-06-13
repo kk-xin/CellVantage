@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');        // Password hashing
 const jwt = require('jsonwebtoken');       // Token generation
 const db = require('../db');               // Database connection pool
+const { verifyToken, requireRole } = require('../middleware/auth');  // Authentication middleware
 
 // ── POST /api/auth/register ─────────────────────────────
 // Create a new user (admin only in production)
@@ -103,24 +104,12 @@ router.post('/login', async (req, res) => {
 
 
 // ── GET /api/auth/me ────────────────────────────────────
-// Get current logged-in user info (requires token)
-router.get('/me', async (req, res) => {
+// Get current logged-in user info
+router.get('/me', verifyToken, async (req, res) => {
   try {
-    // Extract token from request header
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // "Bearer <token>"
-
-    if (!token) {
-      return res.status(401).json({ success: false, message: 'No token provided' });
-    }
-
-    // Verify and decode token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Fetch fresh user data from database
     const [users] = await db.query(
       'SELECT id, username, email, role, created_at FROM users WHERE id = ?',
-      [decoded.id]
+      [req.user.id]  // 直接用 req.user.id
     );
 
     if (users.length === 0) {
@@ -130,40 +119,22 @@ router.get('/me', async (req, res) => {
     res.json({ success: true, data: users[0] });
 
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ success: false, message: 'Invalid token' });
-    }
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
+
 // ── PATCH /api/auth/users/:id/role ──────────────────────
 // Admin only: assign role to a user
-router.patch('/users/:id/role', async (req, res) => {
+router.patch('/users/:id/role', verifyToken, requireRole('admin'), async (req, res) => {
   try {
-    // Get token from header
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-      return res.status(401).json({ success: false, message: 'No token provided' });
-    }
-
-    // Verify token and check if requester is admin
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Only admin can assign roles' });
-    }
-
     const { role } = req.body;
 
-    // Validate role value
     const validRoles = ['admin', 'lab_operator', 'warehouse_staff', 'quality_engineer', 'system'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ success: false, message: 'Invalid role' });
     }
 
-    // Update user role
     const [result] = await db.query(
       'UPDATE users SET role = ? WHERE id = ?',
       [role, req.params.id]
@@ -176,9 +147,6 @@ router.patch('/users/:id/role', async (req, res) => {
     res.json({ success: true, message: `Role updated to ${role}` });
 
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ success: false, message: 'Invalid token' });
-    }
     res.status(500).json({ success: false, message: error.message });
   }
 });
