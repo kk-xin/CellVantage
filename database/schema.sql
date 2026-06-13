@@ -108,6 +108,13 @@ CREATE TABLE IF NOT EXISTS cell_audit_logs (
   INDEX idx_changed_to (changed_to)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Immutable, append-only historical audit trail for compliance and tracking';
 
+-- Insert default admin user (password: Admin@2026)
+INSERT INTO users (username, password_hash, email, role) VALUES (
+  'admin',
+  '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+  'admin@cellvantage.com',
+  'admin'
+);
 
 -- ============================================
 -- Virtual View Layer (Views)
