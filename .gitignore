@@ -13,3 +13,5 @@ env/
 # Ignore Node.js tracking modules
 backend/node_modules/
 node_modules/
+
+*.http
