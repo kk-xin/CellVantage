@@ -70,7 +70,13 @@ function CellList() {
         </tbody>
       </table>
 
-      {cells.length === 0 && <p>No cells found.</p>}
+      {cells.length === 0 && (
+        <p>
+          {user?.role === 'system'
+            ? 'Your account is pending role assignment by an administrator.'
+            : 'No cells found.'}
+        </p>
+      )}
     </div>
   );
 }

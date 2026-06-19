@@ -29,6 +29,11 @@ router.get('/', verifyToken, async (req, res) => {
     const role = req.user.role;
     const stateFilter = visibleStates[role];
 
+    // If role has no defined visibility rule, they see nothing
+    if (stateFilter === undefined) {
+      return res.json({ success: true, data: [] });
+    }
+
     let query = 'SELECT * FROM v_cells_with_batch';
     let params = [];
 
