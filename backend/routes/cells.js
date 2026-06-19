@@ -124,43 +124,70 @@ router.post('/', verifyToken, requireRole('quality_engineer'), async (req, res) 
 
 
 // ── POST /api/cells/import ──────────────────────────────
-// Bulk import cells via CSV — quality_engineer and admin only
+// Create batch + bulk import cells via CSV — quality_engineer only
 router.post('/import', verifyToken, requireRole('quality_engineer'), async (req, res) => {
   try {
-    const { cells } = req.body;  // Array of cell objects parsed from CSV
+    const { batch_number, supplier, delivery_date, cells } = req.body;
+
+    // Validate batch-level fields
+    if (!batch_number || !supplier || !delivery_date) {
+      return res.status(400).json({
+        success: false,
+        message: 'batch_number, supplier and delivery_date are required'
+      });
+    }
 
     if (!cells || cells.length === 0) {
       return res.status(400).json({ success: false, message: 'No cells data provided' });
     }
 
+    // Check if this batch already exists
+    const [existingBatch] = await db.query(
+      'SELECT id FROM batches WHERE batch_number = ?',
+      [batch_number]
+    );
+
+    let batchId;
+
+    if (existingBatch.length > 0) {
+      // Batch already exists — reuse it
+      batchId = existingBatch[0].id;
+    } else {
+      // Create a new batch, total_quantity is the number of cells in this CSV
+      const [batchResult] = await db.query(
+        `INSERT INTO batches (batch_number, supplier, total_quantity, delivery_date)
+         VALUES (?, ?, ?, ?)`,
+        [batch_number, supplier, cells.length, delivery_date]
+      );
+      batchId = batchResult.insertId;
+    }
+
     const results = {
-      success: [],  // Successfully imported rows
-      errors: []    // Failed rows with reasons
+      success: [],
+      errors: []
     };
 
-    // Process each row individually — row-level error reporting
+    // Process each cell row individually — row-level error reporting
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i];
       const rowNum = i + 1;
 
-      // Validate required fields per row
-      if (!cell.cell_code || !cell.batch_id) {
+      if (!cell.cell_code) {
         results.errors.push({
           row: rowNum,
-          cell_code: cell.cell_code || 'N/A',
-          reason: 'Missing required fields: cell_code and batch_id'
+          cell_code: 'N/A',
+          reason: 'Missing required field: cell_code'
         });
-        continue;  // Skip to next row, don't stop entire import
+        continue;
       }
 
       try {
         const [result] = await db.query(
           `INSERT INTO cells (cell_code, batch_id, model, capacity_rated, voltage_nominal, manufacture_date)
            VALUES (?, ?, ?, ?, ?, ?)`,
-          [cell.cell_code, cell.batch_id, cell.model, cell.capacity_rated, cell.voltage_nominal, cell.manufacture_date]
+          [cell.cell_code, batchId, cell.model, cell.capacity_rated, cell.voltage_nominal, cell.manufacture_date]
         );
 
-        // Write audit log for each imported cell
         await db.query(
           `INSERT INTO cell_audit_logs (cell_id, operator_id, event_type, changed_from, changed_to, notes)
            VALUES (?, ?, 'Create', NULL, 'Received', 'Cell imported via CSV')`,
@@ -170,7 +197,6 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
         results.success.push({ row: rowNum, cell_code: cell.cell_code, id: result.insertId });
 
       } catch (rowError) {
-        // Handle duplicate cell_code or other DB errors per row
         results.errors.push({
           row: rowNum,
           cell_code: cell.cell_code,
@@ -179,10 +205,10 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
       }
     }
 
-    // Return row-level results — never a generic "import failed"
     res.status(207).json({
       success: true,
       message: `Import complete: ${results.success.length} succeeded, ${results.errors.length} failed`,
+      batch_id: batchId,
       data: results
     });
 

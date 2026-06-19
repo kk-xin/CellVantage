@@ -4,7 +4,6 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CellList from './pages/CellList';
 import CellDetail from './pages/CellDetail';
-import BatchNew from './pages/BatchNew';
 import CellImport from './pages/CellImport';
 import './App.css';
 
@@ -56,14 +55,6 @@ function App() {
           }
         />
 
-        <Route
-          path="/batches/new"
-          element={
-            <ProtectedRoute>
-              <BatchNew />
-            </ProtectedRoute>
-          }
-        />
 
         <Route
           path="/cells/import"
