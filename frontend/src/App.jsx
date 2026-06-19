@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import CellList from './pages/CellList';
 import CellDetail from './pages/CellDetail';
 import CellImport from './pages/CellImport';
+import Navbar from './components/Navbar';
 import './App.css';
 
 // Wrapper component — only allow access if user is logged in
@@ -25,6 +26,7 @@ function ProtectedRoute({ children }) {
 function App() {
   return (
     <div className="app-container">
+       <Navbar />
       <Routes>
         <Route path="/login" element={<Login />} />
 
