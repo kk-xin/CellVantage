@@ -133,7 +133,8 @@ SELECT
   b.delivery_date,
   c.model,
   c.capacity_rated,
-  c.voltage_nominal
+  c.voltage_nominal,
+  c.manufacture_date
 FROM cells c
 LEFT JOIN batches b ON c.batch_id = b.id;
 

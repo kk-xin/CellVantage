@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+
+ // Convert any date string to YYYY-MM-DD format for <input type="date">
+function formatDateForInput(dateStr) {
+  if (!dateStr) return '';
+  return dateStr.split('T')[0];
+}
 
 function CellDetail() {
   const { id } = useParams();           // Get cell id from URL
@@ -17,6 +23,12 @@ function CellDetail() {
   const [notes, setNotes] = useState('');
   const [updating, setUpdating] = useState(false);
 
+  const [editMode, setEditMode] = useState(false);
+  const [editModel, setEditModel] = useState('');
+  const [editCapacity, setEditCapacity] = useState('');
+  const [editVoltage, setEditVoltage] = useState('');
+  const [editManufactureDate, setEditManufactureDate] = useState('');
+
   useEffect(() => {
     fetchCellData();
   }, [id]);   // Re-fetch if the id in the URL changes
@@ -31,6 +43,11 @@ function CellDetail() {
       ]);
 
       setCell(cellRes.data.data);
+      console.log('manufacture_date raw value:', cellRes.data.data.manufacture_date);
+      setEditModel(cellRes.data.data.model || '');
+      setEditCapacity(cellRes.data.data.capacity_rated || '');
+      setEditVoltage(cellRes.data.data.voltage_nominal || '');
+      setEditManufactureDate(formatDateForInput(cellRes.data.data.manufacture_date));
       setHistory(historyRes.data.data);
 
     } catch (err) {
@@ -63,12 +80,35 @@ function CellDetail() {
     }
   };
 
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await axios.patch(
+        `http://localhost:3000/api/cells/${id}`,
+        {
+          model: editModel,
+          capacity_rated: editCapacity,
+          voltage_nominal: editVoltage,
+          manufacture_date: editManufactureDate
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setEditMode(false);
+      await fetchCellData();
+
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update cell info');
+    }
+  };
+
   // Map each role to the states they're allowed to set
   const roleOptions = {
     quality_engineer: ['Incoming QC', 'Failed'],
-    warehouse_staff:  ['Storage'],
-    lab_operator:     ['Under Test', 'Passed', 'Failed'],
-    admin:            ['Disposed']
+    warehouse_staff: ['Storage'],
+    lab_operator: ['Under Test', 'Passed', 'Failed'],
+    admin: ['Disposed']
   };
 
   const myOptions = roleOptions[user?.role] || [];
@@ -81,7 +121,60 @@ function CellDetail() {
       <button onClick={() => navigate('/cells')}>← Back to list</button>
 
       <h1>{cell.cell_code}</h1>
-      <p><strong>Model:</strong> {cell.model}</p>
+      {user?.role === 'quality_engineer' && (
+        <button onClick={() => setEditMode(!editMode)} style={{ marginBottom: '10px' }}>
+          {editMode ? 'Cancel' : 'Edit Info'}
+        </button>
+      )}
+
+      {editMode ? (
+        <form onSubmit={handleEditSubmit} style={{ border: '1px solid #ccc', padding: '15px', marginBottom: '15px' }}>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Model</label>
+            <input
+              type="text"
+              value={editModel}
+              onChange={(e) => setEditModel(e.target.value)}
+              style={{ width: '100%', padding: '6px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Capacity Rated (mAh)</label>
+            <input
+              type="number"
+              value={editCapacity}
+              onChange={(e) => setEditCapacity(e.target.value)}
+              style={{ width: '100%', padding: '6px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Voltage Nominal (V)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={editVoltage}
+              onChange={(e) => setEditVoltage(e.target.value)}
+              style={{ width: '100%', padding: '6px' }}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label>Manufacture Date</label>
+            <input
+              type="date"
+              value={editManufactureDate}
+              onChange={(e) => setEditManufactureDate(e.target.value)}
+              style={{ width: '100%', padding: '6px' }}
+            />
+          </div>
+          <button type="submit">Save Changes</button>
+        </form>
+      ) : (
+        <div>
+          <p><strong>Model:</strong> {cell.model || '(missing)'}</p>
+          <p><strong>Capacity:</strong> {cell.capacity_rated ? `${cell.capacity_rated} mAh` : '(missing)'}</p>
+          <p><strong>Voltage:</strong> {cell.voltage_nominal ? `${cell.voltage_nominal} V` : '(missing)'}</p>
+        </div>
+      )}
       <p><strong>Batch:</strong> {cell.batch_number} ({cell.batch_supplier})</p>
       <p><strong>Current State:</strong> {cell.current_state}</p>
 

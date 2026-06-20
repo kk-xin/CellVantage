@@ -97,6 +97,43 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 });
 
+// ── PATCH /api/cells/:id ────────────────────────────────
+// Update cell's basic info (model, capacity, voltage, manufacture_date)
+// quality_engineer only — used to fill in missing data after import
+router.patch('/:id', verifyToken, requireRole('quality_engineer'), async (req, res) => {
+  try {
+    const { model, capacity_rated, voltage_nominal, manufacture_date } = req.body;
+
+    // Get the cell's current state first, so changed_to has a valid value
+    const [cells] = await db.query('SELECT current_state FROM cells WHERE id = ?', [req.params.id]);
+    if (cells.length === 0) {
+      return res.status(404).json({ success: false, message: 'Cell not found' });
+    }
+    const currentState = cells[0].current_state;
+
+    const [result] = await db.query(
+      `UPDATE cells 
+       SET model = ?, capacity_rated = ?, voltage_nominal = ?, manufacture_date = ?
+       WHERE id = ?`,
+      [model, capacity_rated, voltage_nominal, manufacture_date, req.params.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Cell not found' });
+    }
+
+    await db.query(
+      `INSERT INTO cell_audit_logs (cell_id, operator_id, event_type, changed_from, changed_to, notes)
+       VALUES (?, ?, 'Correction', ?, ?, 'Cell information updated/corrected')`,
+      [req.params.id, req.user.id, currentState, currentState]
+    );
+
+    res.json({ success: true, message: 'Cell info updated' });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 // ── POST /api/cells ─────────────────────────────────────
 // Create a single cell — quality_engineer only
