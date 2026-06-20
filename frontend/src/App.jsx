@@ -7,6 +7,7 @@ import CellList from './pages/CellList';
 import CellDetail from './pages/CellDetail';
 import CellImport from './pages/CellImport';
 import Navbar from './components/Navbar';
+import UserManagement from './pages/UserManagement';
 import './App.css';
 
 // Wrapper component — only allow access if user is logged in
@@ -64,6 +65,15 @@ function App() {
           element={
             <ProtectedRoute>
               <CellImport />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+               <UserManagement />
             </ProtectedRoute>
           }
         />

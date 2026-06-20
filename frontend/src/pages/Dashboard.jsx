@@ -38,14 +38,7 @@ function Dashboard() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Dashboard</h1>
-        <div>
-          <span style={{ marginRight: '15px' }}>Welcome, {user?.username}</span>
-          <button onClick={logout}>Logout</button>
-        </div>
-      </div>
-
+      <h1>Dashboard</h1>
       <h2>Cells by State</h2>
       <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
         {stateSummary.map((item) => (

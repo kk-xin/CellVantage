@@ -33,14 +33,7 @@ function CellList() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Cells</h1>
-        <div>
-          <span style={{ marginRight: '15px' }}>Welcome, {user?.username} ({user?.role})</span>
-          <button onClick={logout}>Logout</button>
-        </div>
-      </div>
-
+      <h1>Cells</h1>
       <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
         <thead>
           <tr>

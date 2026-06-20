@@ -151,5 +151,40 @@ router.patch('/users/:id/role', verifyToken, requireRole('admin'), async (req, r
   }
 });
 
+// ── GET /api/auth/users ─────────────────────────────────
+// Admin only: list all users
+router.get('/users', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const [users] = await db.query(
+      'SELECT id, username, email, role, is_active, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json({ success: true, data: users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+
+// ── PATCH /api/auth/users/:id/active ────────────────────
+// Admin only: enable/disable a user account
+router.patch('/users/:id/active', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const { is_active } = req.body;
+
+    const [result] = await db.query(
+      'UPDATE users SET is_active = ? WHERE id = ?',
+      [is_active, req.params.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, message: `User ${is_active ? 'activated' : 'deactivated'}` });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 module.exports = router;
