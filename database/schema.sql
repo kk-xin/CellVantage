@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(50) NOT NULL UNIQUE COMMENT 'Login username (e.g., zkx1234)', -- Automatically indexed (UNIQUE)
   password_hash VARCHAR(255) NOT NULL COMMENT 'Bcrypt hashed password value',
   email VARCHAR(100) COMMENT 'Employee email address',
-  role ENUM('admin', 'lab_operator', 'warehouse_staff', 'quality_engineer', 'system') NOT NULL DEFAULT 'system' COMMENT 'Role-based access control permissions',
+  role ENUM('admin', 'lab_operator', 'warehouse_staff', 'quality_engineer', 'disposal_manager', 'system') NOT NULL DEFAULT 'system' COMMENT 'Employee role for access control and permissions',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Account creation timestamp',
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last account update timestamp',
   is_active BOOLEAN DEFAULT TRUE COMMENT 'Flag to indicate if the account is active',
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS cell_audit_logs (
 -- Insert default admin user (password: Admin@2026)
 INSERT INTO users (username, password_hash, email, role) VALUES (
   'admin',
-  '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+  '$2b$10$IsEG72JfE3w5kMM7yt7a7uZvFutfcqNdSgTAoy6v825kR5NLW1TL.',
   'admin@cellvantage.com',
   'admin'
 );

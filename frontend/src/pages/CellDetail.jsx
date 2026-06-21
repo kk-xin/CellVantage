@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
- // Convert any date string to YYYY-MM-DD format for <input type="date">
+// Convert any date string to YYYY-MM-DD format for <input type="date">
 function formatDateForInput(dateStr) {
   if (!dateStr) return '';
   return dateStr.split('T')[0];
@@ -103,15 +103,24 @@ function CellDetail() {
     }
   };
 
-  // Map each role to the states they're allowed to set
+  // Map each role to the FROM → TO transitions they're allowed to perform
   const roleOptions = {
-    quality_engineer: ['Incoming QC', 'Failed'],
-    warehouse_staff: ['Storage'],
-    lab_operator: ['Under Test', 'Passed', 'Failed'],
-    admin: ['Disposed']
+    quality_engineer: {
+      'Received': ['Incoming QC', 'Failed']
+    },
+    warehouse_staff: {
+      'Incoming QC': ['Storage']
+    },
+    lab_operator: {
+      'Storage': ['Under Test'],
+      'Under Test': ['Passed', 'Failed']
+    },
+    disposal_manager: {
+      'Failed': ['Disposed']
+    }
   };
 
-  const myOptions = roleOptions[user?.role] || [];
+  const myOptions = roleOptions[user?.role]?.[cell?.current_state] || [];
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;

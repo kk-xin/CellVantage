@@ -130,7 +130,7 @@ router.patch('/users/:id/role', verifyToken, requireRole('admin'), async (req, r
   try {
     const { role } = req.body;
 
-    const validRoles = ['admin', 'lab_operator', 'warehouse_staff', 'quality_engineer', 'system'];
+    const validRoles = ['admin', 'lab_operator', 'warehouse_staff', 'quality_engineer', 'disposal_manager', 'system'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ success: false, message: 'Invalid role' });
     }

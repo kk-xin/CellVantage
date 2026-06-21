@@ -5,22 +5,31 @@ const { verifyToken, requireRole } = require('../middleware/auth');
 
 // ── Role-based permissions ──────────────────────────────
 
-// Which states each role can transition TO
+// Which states each role can transition TO (and FROM)
 const allowedTransitions = {
-  quality_engineer: ['Incoming QC', 'Failed'],
-  warehouse_staff:  ['Storage'],
-  lab_operator:     ['Under Test', 'Passed', 'Failed'],
-  admin:            ['Disposed']
+  quality_engineer: {
+    'Received':  ['Incoming QC', 'Failed']
+  },
+  warehouse_staff: {
+    'Incoming QC': ['Storage']
+  },
+  lab_operator: {
+    'Storage':    ['Under Test'],
+    'Under Test': ['Passed', 'Failed']
+  },
+  disposal_manager: {
+    'Failed': ['Disposed']
+  }
 };
 
 // Which states each role can SEE
 const visibleStates = {
-  quality_engineer: ['Received'],
-  warehouse_staff:  ['Incoming QC'],
-  lab_operator:     ['Storage', 'Under Test'],
-  admin:            null  // null = see everything
+  quality_engineer:  ['Received'],
+  warehouse_staff:   ['Incoming QC'],
+  lab_operator:      ['Storage', 'Under Test'],
+  disposal_manager:  ['Failed'],
+  admin:             null  // null = see everything
 };
-
 
 // ── GET /api/cells ──────────────────────────────────────
 // Get cells — each role only sees their relevant states
@@ -265,29 +274,30 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
 router.patch('/:id/state', verifyToken, async (req, res) => {
   try {
     const { new_state, notes } = req.body;
-    const operator_id = req.user.id;    // Always from token, never from frontend
+    const operator_id = req.user.id;
     const role = req.user.role;
 
     if (!new_state || !notes) {
       return res.status(400).json({ success: false, message: 'new_state and notes are required' });
     }
 
-    // Check if this role can set this state
-    const allowed = allowedTransitions[role];
-    if (!allowed || !allowed.includes(new_state)) {
-      return res.status(403).json({
-        success: false,
-        message: `${role} is not allowed to set state to ${new_state}`
-      });
-    }
-
-    // Get current state
+    // Get current state first — we need it to check the FROM → TO rule
     const [cells] = await db.query('SELECT current_state FROM cells WHERE id = ?', [req.params.id]);
     if (cells.length === 0) {
       return res.status(404).json({ success: false, message: 'Cell not found' });
     }
-
     const previous_state = cells[0].current_state;
+
+    // Check if this role is allowed to move FROM the current state TO the new state
+    const roleRules = allowedTransitions[role];
+    const allowedTargets = roleRules ? roleRules[previous_state] : undefined;
+
+    if (!allowedTargets || !allowedTargets.includes(new_state)) {
+      return res.status(403).json({
+        success: false,
+        message: `${role} cannot change state from ${previous_state} to ${new_state}`
+      });
+    }
 
     // Update cell state
     await db.query('UPDATE cells SET current_state = ? WHERE id = ?', [new_state, req.params.id]);

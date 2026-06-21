@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
-const ROLES = ['system', 'quality_engineer', 'warehouse_staff', 'lab_operator', 'admin'];
+const ROLES = ['system', 'quality_engineer', 'warehouse_staff', 'lab_operator', 'disposal_manager', 'admin'];
 
 function UserManagement() {
   const { token, user } = useAuth();
