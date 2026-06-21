@@ -27,7 +27,7 @@ const visibleStates = {
   quality_engineer:  ['Received'],
   warehouse_staff:   ['Incoming QC'],
   lab_operator:      ['Storage', 'Under Test'],
-  disposal_manager:  ['Failed'],
+  disposal_manager:  ['Failed', 'Disposed'],
   admin:             null  // null = see everything
 };
 
