@@ -125,6 +125,7 @@ CREATE OR REPLACE VIEW v_cells_with_batch AS
 SELECT 
   c.id,
   c.cell_code,
+  c.batch_id,
   c.current_state,
   c.created_at,
   c.updated_at,

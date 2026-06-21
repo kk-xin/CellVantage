@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
+
 function Dashboard() {
   const { token, logout, user } = useAuth();
+  const navigate = useNavigate();
   const [stateSummary, setStateSummary] = useState([]);
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +69,7 @@ function Dashboard() {
             <th>Supplier</th>
             <th>Delivery Date</th>
             <th>Cell Count</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -75,6 +79,11 @@ function Dashboard() {
               <td>{batch.supplier}</td>
               <td>{batch.delivery_date}</td>
               <td>{batch.cell_count}</td>
+              <td>
+                <button onClick={() => navigate(`/batches/${batch.id}`)}>
+                  View
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

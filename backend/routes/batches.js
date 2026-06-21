@@ -133,5 +133,40 @@ router.patch('/:id', verifyToken, requireRole('quality_engineer'), async (req, r
   }
 });
 
+// ── GET /api/batches/:id/cells-by-state ─────────────────
+// disposal_manager only — see all cells in a batch grouped by state
+router.get('/:id/cells-by-state', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    const [batch] = await db.query('SELECT * FROM batches WHERE id = ?', [req.params.id]);
+    if (batch.length === 0) {
+      return res.status(404).json({ success: false, message: 'Batch not found' });
+    }
+
+    const [cells] = await db.query(
+      'SELECT * FROM v_cells_with_batch WHERE batch_id = ? ORDER BY current_state',
+      [req.params.id]
+    );
+
+    // Group cells by their current_state
+    const grouped = {};
+    cells.forEach((cell) => {
+      if (!grouped[cell.current_state]) {
+        grouped[cell.current_state] = [];
+      }
+      grouped[cell.current_state].push(cell);
+    });
+
+    res.json({
+      success: true,
+      data: {
+        batch: batch[0],
+        grouped
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 module.exports = router;

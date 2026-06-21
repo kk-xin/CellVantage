@@ -8,6 +8,7 @@ import CellDetail from './pages/CellDetail';
 import CellImport from './pages/CellImport';
 import Navbar from './components/Navbar';
 import UserManagement from './pages/UserManagement';
+import BatchDetail from './pages/BatchDetail';
 import './App.css';
 
 // Wrapper component — only allow access if user is logged in
@@ -74,6 +75,16 @@ function App() {
           element={
             <ProtectedRoute>
                <UserManagement />
+            </ProtectedRoute>
+          }
+        />
+
+
+        <Route
+          path="/batches/:id"
+          element={
+            <ProtectedRoute>
+              <BatchDetail />
             </ProtectedRoute>
           }
         />

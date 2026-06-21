@@ -180,7 +180,6 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
   try {
     const { batch_number, supplier, delivery_date, cells } = req.body;
 
-    // Validate batch-level fields
     if (!batch_number || !supplier || !delivery_date) {
       return res.status(400).json({
         success: false,
@@ -192,7 +191,6 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
       return res.status(400).json({ success: false, message: 'No cells data provided' });
     }
 
-    // Check if this batch already exists
     const [existingBatch] = await db.query(
       'SELECT id FROM batches WHERE batch_number = ?',
       [batch_number]
@@ -201,14 +199,13 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
     let batchId;
 
     if (existingBatch.length > 0) {
-      // Batch already exists — reuse it
       batchId = existingBatch[0].id;
     } else {
-      // Create a new batch, total_quantity is the number of cells in this CSV
+      // Create batch with total_quantity = 0 for now, we'll update it after processing
       const [batchResult] = await db.query(
         `INSERT INTO batches (batch_number, supplier, total_quantity, delivery_date)
          VALUES (?, ?, ?, ?)`,
-        [batch_number, supplier, cells.length, delivery_date]
+        [batch_number, supplier, 0, delivery_date]
       );
       batchId = batchResult.insertId;
     }
@@ -218,7 +215,6 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
       errors: []
     };
 
-    // Process each cell row individually — row-level error reporting
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i];
       const rowNum = i + 1;
@@ -255,6 +251,15 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
         });
       }
     }
+
+    // Now that we know exactly how many succeeded, update the batch's total_quantity
+    // If reusing an existing batch, add to its current total instead of overwriting
+    await db.query(
+      `UPDATE batches 
+       SET total_quantity = total_quantity + ? 
+       WHERE id = ?`,
+      [results.success.length, batchId]
+    );
 
     res.status(207).json({
       success: true,
