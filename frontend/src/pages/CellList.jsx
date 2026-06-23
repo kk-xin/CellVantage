@@ -4,12 +4,15 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
 function CellList() {
-  const { token, user, logout } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
 
   const [cells, setCells] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [sortField, setSortField] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     fetchCells();
@@ -28,25 +31,64 @@ function CellList() {
     }
   };
 
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedCells = [...cells].sort((a, b) => {
+    if (!sortField) return 0;
+
+    let valA = a[sortField];
+    let valB = b[sortField];
+
+    if (typeof valA === 'string') valA = valA.toLowerCase();
+    if (typeof valB === 'string') valB = valB.toLowerCase();
+
+    if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+    if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const renderArrow = (field) => {
+  if (sortField !== field) return ' ⇅';  // 还没排序时，显示一个中性的双向箭头
+  return sortDirection === 'asc' ? ' ▲' : ' ▼';
+};
+
   if (loading) return <p>Loading cells...</p>;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (
     <div>
       <h1>Cells</h1>
-      <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+
+      <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px', tableLayout: 'fixed' }}>
         <thead>
           <tr>
-            <th>Cell Code</th>
-            <th>Model</th>
-            <th>Batch Number</th>
-            <th>Current State</th>
-            <th>Created At</th>
+            <th onClick={() => handleSort('cell_code')} style={{ cursor: 'pointer' }}>
+              Cell Code{renderArrow('cell_code')}
+            </th>
+            <th onClick={() => handleSort('model')} style={{ cursor: 'pointer' }}>
+              Model{renderArrow('model')}
+            </th>
+            <th onClick={() => handleSort('batch_number')} style={{ cursor: 'pointer' }}>
+              Batch Number{renderArrow('batch_number')}
+            </th>
+            <th onClick={() => handleSort('current_state')} style={{ cursor: 'pointer' }}>
+              Current State{renderArrow('current_state')}
+            </th>
+            <th onClick={() => handleSort('created_at')} style={{ cursor: 'pointer' }}>
+              Created At{renderArrow('created_at')}
+            </th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          {cells.map((cell) => (
+          {sortedCells.map((cell) => (
             <tr key={cell.id}>
               <td>{cell.cell_code}</td>
               <td>{cell.model}</td>

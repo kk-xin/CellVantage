@@ -8,13 +8,13 @@ const { verifyToken, requireRole } = require('../middleware/auth');
 // Which states each role can transition TO (and FROM)
 const allowedTransitions = {
   quality_engineer: {
-    'Received':  ['Incoming QC', 'Failed']
+    'Received': ['Incoming QC', 'Failed']
   },
   warehouse_staff: {
     'Incoming QC': ['Storage']
   },
   lab_operator: {
-    'Storage':    ['Under Test'],
+    'Storage': ['Under Test'],
     'Under Test': ['Passed', 'Failed']
   },
   disposal_manager: {
@@ -24,11 +24,11 @@ const allowedTransitions = {
 
 // Which states each role can SEE
 const visibleStates = {
-  quality_engineer:  ['Received'],
-  warehouse_staff:   ['Incoming QC'],
-  lab_operator:      ['Storage', 'Under Test'],
-  disposal_manager:  ['Failed', 'Disposed'],
-  admin:             null  // null = see everything
+  quality_engineer: ['Received'],
+  warehouse_staff: ['Incoming QC'],
+  lab_operator: ['Storage', 'Under Test'],
+  disposal_manager: ['Failed', 'Disposed'],
+  admin: null  // null = see everything
 };
 
 // ── GET /api/cells ──────────────────────────────────────
@@ -258,6 +258,23 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
       `UPDATE batches 
        SET total_quantity = total_quantity + ? 
        WHERE id = ?`,
+      [results.success.length, batchId]
+    );
+
+    // If this was a newly created batch but zero cells succeeded, clean it up
+    const isNewBatch = existingBatch.length === 0;
+    if (isNewBatch && results.success.length === 0) {
+      await db.query('DELETE FROM batches WHERE id = ?', [batchId]);
+      return res.status(400).json({
+        success: false,
+        message: 'Import failed: no valid cells found, batch was not created',
+        data: results
+      });
+    }
+
+    // Now that we know exactly how many succeeded, update the batch's total_quantity
+    await db.query(
+      `UPDATE batches SET total_quantity = total_quantity + ? WHERE id = ?`,
       [results.success.length, batchId]
     );
 
