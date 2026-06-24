@@ -130,6 +130,17 @@ router.patch('/users/:id/role', verifyToken, requireRole('admin'), async (req, r
   try {
     const { role } = req.body;
 
+    const userId = parseInt(req.params.id);
+
+    // 新增这个检查
+    if (userId === req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You cannot change your own role. Contact another admin for assistance.'
+      });
+    }
+
+
     const validRoles = ['admin', 'lab_operator', 'warehouse_staff', 'quality_engineer', 'disposal_manager', 'system'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ success: false, message: 'Invalid role' });
