@@ -19,18 +19,13 @@ function Register() {
     setLoading(true);
 
     try {
-      // Step 1: Register the account
       await axios.post('http://localhost:3000/api/auth/register', {
         username,
         password,
         email
       });
 
-      // Step 2: Immediately log in with the same credentials
       await login(username, password);
-
-      // Step 3: Go straight to cells page (will show "no permission" message
-      // since role is still 'system' until admin assigns one)
       navigate('/cells');
 
     } catch (err) {
@@ -41,50 +36,63 @@ function Register() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto' }}>
-      <h1>Create Account</h1>
+    <div style={{
+      maxWidth: '380px',
+      margin: '100px auto',
+      backgroundColor: 'var(--bg-surface)',
+      border: '1px solid var(--border-subtle)',
+      borderRadius: 'var(--radius-md)',
+      padding: '32px'
+    }}>
+      <h1 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px' }}>Create account</h1>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Username</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            Username
+          </label>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Email</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            Email
+          </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Password</label>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            Password
+          </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {error && <p style={{ color: 'var(--state-danger)', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}
 
-        <button type="submit" disabled={loading} style={{ width: '100%', padding: '10px' }}>
+        <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>
           {loading ? 'Creating account...' : 'Register'}
         </button>
       </form>
 
-      <p style={{ marginTop: '15px' }}>
+      <p style={{ marginTop: '18px', fontSize: '13px', color: 'var(--text-secondary)' }}>
         Already have an account? <Link to="/login">Login here</Link>
       </p>
     </div>

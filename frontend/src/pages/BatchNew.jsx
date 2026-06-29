@@ -16,9 +16,8 @@ function BatchNew() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Only quality_engineer can create batches
   if (user?.role !== 'quality_engineer') {
-    return <p>You do not have permission to create a batch.</p>;
+    return <p style={{ color: 'var(--text-secondary)' }}>You do not have permission to create a batch.</p>;
   }
 
   const handleSubmit = async (e) => {
@@ -39,7 +38,6 @@ function BatchNew() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Redirect to import page, passing the new batch_id along
       navigate(`/cells/import?batch_id=${res.data.id}`);
 
     } catch (err) {
@@ -50,67 +48,73 @@ function BatchNew() {
   };
 
   return (
-    <div style={{ maxWidth: '500px' }}>
-      <h1>Create New Batch</h1>
+    <div style={{
+      maxWidth: '460px',
+      backgroundColor: 'var(--bg-surface)',
+      border: '1px solid var(--border-subtle)',
+      borderRadius: 'var(--radius-md)',
+      padding: '28px'
+    }}>
+      <h1 style={{ fontSize: '20px', marginTop: 0, marginBottom: '20px' }}>Create New Batch</h1>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Batch Number</label>
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Batch Number</label>
           <input
             type="text"
             value={batchNumber}
             onChange={(e) => setBatchNumber(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Supplier</label>
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Supplier</label>
           <input
             type="text"
             value={supplier}
             onChange={(e) => setSupplier(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Total Quantity</label>
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Total Quantity</label>
           <input
             type="number"
             value={totalQuantity}
             onChange={(e) => setTotalQuantity(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Delivery Date</label>
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Delivery Date</label>
           <input
             type="date"
             value={deliveryDate}
             onChange={(e) => setDeliveryDate(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Notes (optional)</label>
+        <div style={{ marginBottom: '18px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Notes (optional)</label>
           <input
             type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {error && <p style={{ color: 'var(--state-danger)', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}
 
-        <button type="submit" disabled={submitting} style={{ width: '100%', padding: '10px' }}>
+        <button type="submit" disabled={submitting} className="btn-primary" style={{ width: '100%' }}>
           {submitting ? 'Creating...' : 'Create Batch'}
         </button>
       </form>

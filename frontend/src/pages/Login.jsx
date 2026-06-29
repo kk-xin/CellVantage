@@ -13,14 +13,13 @@ function Login() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();  // Prevent the browser from refreshing the page
+    e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
       const userData = await login(username, password);
 
-      // Redirect based on role
       if (userData.role === 'admin') {
         navigate('/dashboard');
       } else {
@@ -35,39 +34,50 @@ function Login() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto' }}>
-      <h1>CellVantage Login</h1>
+    <div style={{
+      maxWidth: '380px',
+      margin: '100px auto',
+      backgroundColor: 'var(--bg-surface)',
+      border: '1px solid var(--border-subtle)',
+      borderRadius: 'var(--radius-md)',
+      padding: '32px'
+    }}>
+      <h1 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px' }}>CellVantage</h1>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Username</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            Username
+          </label>
           <input
             type="text"
             value={username}
-            onChange={(e) => setUsername(e.target.value)} //input value is controlled by React state
+            onChange={(e) => setUsername(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Password</label>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            Password
+          </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {error && <p style={{ color: 'var(--state-danger)', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}
 
-        <button type="submit" disabled={loading} style={{ width: '100%', padding: '10px' }}>
+        <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%' }}>
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
-      <p style={{ marginTop: '15px' }}>
+      <p style={{ marginTop: '18px', fontSize: '13px', color: 'var(--text-secondary)' }}>
         Don't have an account? <Link to="/register">Register here</Link>
       </p>
     </div>

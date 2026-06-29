@@ -19,12 +19,10 @@ function CellImport() {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
 
-  // Only quality_engineer can import cells
   if (user?.role !== 'quality_engineer') {
-    return <p>You do not have permission to import cells.</p>;
+    return <p style={{ color: 'var(--text-secondary)' }}>You do not have permission to import cells.</p>;
   }
 
-  // Triggered when user selects a CSV file
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -33,7 +31,7 @@ function CellImport() {
     setError('');
 
     Papa.parse(file, {
-      header: true,           // First row becomes the object keys
+      header: true,
       skipEmptyLines: true,
       complete: (results) => {
         setParsedCells(results.data);
@@ -77,68 +75,75 @@ function CellImport() {
     }
   };
 
+  const cardStyle = {
+    backgroundColor: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: 'var(--radius-md)',
+    padding: '28px'
+  };
+
   return (
-    <div style={{ maxWidth: '700px' }}>
+    <div style={{ maxWidth: '640px' }}>
       <h1>Import Cells</h1>
 
-      <form onSubmit={handleSubmit}>
-        <h3>Batch Information</h3>
+      <form onSubmit={handleSubmit} style={cardStyle}>
+        <h3 style={{ marginTop: 0, fontSize: '15px' }}>Batch Information</h3>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Batch Number</label>
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Batch Number</label>
           <input
             type="text"
             value={batchNumber}
             onChange={(e) => setBatchNumber(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Supplier</label>
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Supplier</label>
           <input
             type="text"
             value={supplier}
             onChange={(e) => setSupplier(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Delivery Date</label>
+        <div style={{ marginBottom: '18px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Delivery Date</label>
           <input
             type="date"
             value={deliveryDate}
             onChange={(e) => setDeliveryDate(e.target.value)}
             required
-            style={{ width: '100%', padding: '8px' }}
+            style={{ width: '100%' }}
           />
         </div>
 
-        <h3>Cell Data (CSV)</h3>
+        <h3 style={{ fontSize: '15px' }}>Cell Data (CSV)</h3>
 
-        <div style={{ marginBottom: '15px' }}>
+        <div style={{ marginBottom: '14px' }}>
           <input type="file" accept=".csv" onChange={handleFileChange} required />
-          {fileName && <p>Selected: {fileName} ({parsedCells.length} rows)</p>}
+          {fileName && <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Selected: {fileName} ({parsedCells.length} rows)</p>}
         </div>
 
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {error && <p style={{ color: 'var(--state-danger)', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}
 
-        <button type="submit" disabled={submitting} style={{ width: '100%', padding: '10px' }}>
+        <button type="submit" disabled={submitting} className="btn-primary" style={{ width: '100%' }}>
           {submitting ? 'Importing...' : 'Import Cells'}
         </button>
       </form>
 
       {result && (
-        <div style={{ marginTop: '20px', border: '1px solid #ccc', padding: '15px' }}>
-          <h3>{result.message}</h3>
+        <div style={{ ...cardStyle, marginTop: '20px' }}>
+          <h3 style={{ marginTop: 0, fontSize: '15px' }}>{result.message}</h3>
 
           {result.data.errors.length > 0 && (
             <div>
-              <h4 style={{ color: 'red' }}>Errors:</h4>
-              <ul>
+              <h4 style={{ color: 'var(--state-danger)', fontSize: '13px' }}>Errors:</h4>
+              <ul style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                 {result.data.errors.map((err, index) => (
                   <li key={index}>
                     Row {err.row} ({err.cell_code}): {err.reason}

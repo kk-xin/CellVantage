@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
-
 function Dashboard() {
-  const { token, logout, user } = useAuth();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [stateSummary, setStateSummary] = useState([]);
   const [batches, setBatches] = useState([]);
@@ -20,7 +19,6 @@ function Dashboard() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Fetch cell state summary and batches in parallel
       const [summaryRes, batchesRes] = await Promise.all([
         axios.get('http://localhost:3000/api/cells/dashboard/summary', { headers }),
         axios.get('http://localhost:3000/api/batches', { headers })
@@ -36,48 +34,57 @@ function Dashboard() {
     }
   };
 
-  if (loading) return <p>Loading dashboard...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  if (loading) return <p style={{ color: 'var(--text-secondary)' }}>Loading dashboard...</p>;
+  if (error) return <p style={{ color: 'var(--state-danger)' }}>{error}</p>;
 
   return (
     <div>
       <h1>Dashboard</h1>
-      <h2>Cells by State</h2>
-      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+
+      <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '12px' }}>
+        Cells by state
+      </h2>
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}>
         {stateSummary.map((item) => (
           <div
             key={item.current_state}
             style={{
-              border: '1px solid #ccc',
-              borderRadius: '8px',
-              padding: '20px',
-              minWidth: '150px',
-              textAlign: 'center'
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: '16px 20px',
+              minWidth: '140px'
             }}
           >
-            <h3>{item.current_state}</h3>
-            <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{item.count}</p>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 6px' }}>
+              {item.current_state}
+            </p>
+            <p style={{ fontSize: '24px', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
+              {item.count}
+            </p>
           </div>
         ))}
       </div>
 
-      <h2>Batches</h2>
-      <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '12px' }}>
+        Batches
+      </h2>
+      <table style={{ tableLayout: 'fixed' }}>
         <thead>
           <tr>
             <th>Batch Number</th>
             <th>Supplier</th>
             <th>Delivery Date</th>
             <th>Cell Count</th>
-            <th>Action</th>
+            <th style={{ cursor: 'default' }}>Action</th>
           </tr>
         </thead>
         <tbody>
           {batches.map((batch) => (
             <tr key={batch.id}>
-              <td>{batch.batch_number}</td>
+              <td className="mono">{batch.batch_number}</td>
               <td>{batch.supplier}</td>
-              <td>{batch.delivery_date}</td>
+              <td style={{ color: 'var(--text-secondary)' }}>{batch.delivery_date}</td>
               <td>{batch.cell_count}</td>
               <td>
                 <button onClick={() => navigate(`/batches/${batch.id}`)}>

@@ -3,14 +3,20 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-// Convert any date string to YYYY-MM-DD format for <input type="date">
 function formatDateForInput(dateStr) {
   if (!dateStr) return '';
   return dateStr.split('T')[0];
 }
 
+const cardStyle = {
+  backgroundColor: 'var(--bg-surface)',
+  border: '1px solid var(--border-subtle)',
+  borderRadius: 'var(--radius-md)',
+  padding: '20px'
+};
+
 function CellDetail() {
-  const { id } = useParams();           // Get cell id from URL
+  const { id } = useParams();
   const { token, user } = useAuth();
   const navigate = useNavigate();
 
@@ -31,7 +37,7 @@ function CellDetail() {
 
   useEffect(() => {
     fetchCellData();
-  }, [id]);   // Re-fetch if the id in the URL changes
+  }, [id]);
 
   const fetchCellData = async () => {
     try {
@@ -43,7 +49,6 @@ function CellDetail() {
       ]);
 
       setCell(cellRes.data.data);
-      console.log('manufacture_date raw value:', cellRes.data.data.manufacture_date);
       setEditModel(cellRes.data.data.model || '');
       setEditCapacity(cellRes.data.data.capacity_rated || '');
       setEditVoltage(cellRes.data.data.voltage_nominal || '');
@@ -68,7 +73,6 @@ function CellDetail() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Refresh data after successful update
       setNewState('');
       setNotes('');
       await fetchCellData();
@@ -103,7 +107,6 @@ function CellDetail() {
     }
   };
 
-  // Map each role to the FROM → TO transitions they're allowed to perform
   const roleOptions = {
     quality_engineer: {
       'Received': ['Incoming QC', 'Failed']
@@ -122,81 +125,58 @@ function CellDetail() {
 
   const myOptions = roleOptions[user?.role]?.[cell?.current_state] || [];
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  if (loading) return <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>;
+  if (error) return <p style={{ color: 'var(--state-danger)' }}>{error}</p>;
 
   return (
     <div>
-      <button onClick={() => navigate('/cells')}>← Back to list</button>
+      <button onClick={() => navigate('/cells')} style={{ marginBottom: '16px' }}>← Back to list</button>
 
-      <h1>{cell.cell_code}</h1>
-      {user?.role === 'quality_engineer' && (
-        <button onClick={() => setEditMode(!editMode)} style={{ marginBottom: '10px' }}>
-          {editMode ? 'Cancel' : 'Edit Info'}
-        </button>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+        <h1 style={{ margin: 0 }} className="mono">{cell.cell_code}</h1>
+        {user?.role === 'quality_engineer' && (
+          <button onClick={() => setEditMode(!editMode)}>
+            {editMode ? 'Cancel' : 'Edit Info'}
+          </button>
+        )}
+      </div>
 
       {editMode ? (
-        <form onSubmit={handleEditSubmit} style={{ border: '1px solid #ccc', padding: '15px', marginBottom: '15px' }}>
-          <div style={{ marginBottom: '10px' }}>
-            <label>Model</label>
-            <input
-              type="text"
-              value={editModel}
-              onChange={(e) => setEditModel(e.target.value)}
-              style={{ width: '100%', padding: '6px' }}
-            />
+        <form onSubmit={handleEditSubmit} style={{ ...cardStyle, marginBottom: '16px' }}>
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Model</label>
+            <input type="text" value={editModel} onChange={(e) => setEditModel(e.target.value)} style={{ width: '100%' }} />
           </div>
-          <div style={{ marginBottom: '10px' }}>
-            <label>Capacity Rated (mAh)</label>
-            <input
-              type="number"
-              value={editCapacity}
-              onChange={(e) => setEditCapacity(e.target.value)}
-              style={{ width: '100%', padding: '6px' }}
-            />
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Capacity Rated (mAh)</label>
+            <input type="number" value={editCapacity} onChange={(e) => setEditCapacity(e.target.value)} style={{ width: '100%' }} />
           </div>
-          <div style={{ marginBottom: '10px' }}>
-            <label>Voltage Nominal (V)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={editVoltage}
-              onChange={(e) => setEditVoltage(e.target.value)}
-              style={{ width: '100%', padding: '6px' }}
-            />
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Voltage Nominal (V)</label>
+            <input type="number" step="0.01" value={editVoltage} onChange={(e) => setEditVoltage(e.target.value)} style={{ width: '100%' }} />
           </div>
-          <div style={{ marginBottom: '10px' }}>
-            <label>Manufacture Date</label>
-            <input
-              type="date"
-              value={editManufactureDate}
-              onChange={(e) => setEditManufactureDate(e.target.value)}
-              style={{ width: '100%', padding: '6px' }}
-            />
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Manufacture Date</label>
+            <input type="date" value={editManufactureDate} onChange={(e) => setEditManufactureDate(e.target.value)} style={{ width: '100%' }} />
           </div>
-          <button type="submit">Save Changes</button>
+          <button type="submit" className="btn-primary">Save Changes</button>
         </form>
       ) : (
-        <div>
-          <p><strong>Model:</strong> {cell.model || '(missing)'}</p>
-          <p><strong>Capacity:</strong> {cell.capacity_rated ? `${cell.capacity_rated} mAh` : '(missing)'}</p>
-          <p><strong>Voltage:</strong> {cell.voltage_nominal ? `${cell.voltage_nominal} V` : '(missing)'}</p>
+        <div style={{ ...cardStyle, marginBottom: '16px' }}>
+          <p style={{ margin: '0 0 8px' }}><span style={{ color: 'var(--text-secondary)' }}>Model:</span> {cell.model || <span style={{ color: 'var(--text-muted)' }}>(missing)</span>}</p>
+          <p style={{ margin: '0 0 8px' }}><span style={{ color: 'var(--text-secondary)' }}>Capacity:</span> {cell.capacity_rated ? `${cell.capacity_rated} mAh` : <span style={{ color: 'var(--text-muted)' }}>(missing)</span>}</p>
+          <p style={{ margin: 0 }}><span style={{ color: 'var(--text-secondary)' }}>Voltage:</span> {cell.voltage_nominal ? `${cell.voltage_nominal} V` : <span style={{ color: 'var(--text-muted)' }}>(missing)</span>}</p>
         </div>
       )}
-      <p><strong>Batch:</strong> {cell.batch_number} ({cell.batch_supplier})</p>
-      <p><strong>Current State:</strong> {cell.current_state}</p>
+
+      <p><span style={{ color: 'var(--text-secondary)' }}>Batch:</span> {cell.batch_number} ({cell.batch_supplier})</p>
+      <p><span style={{ color: 'var(--text-secondary)' }}>Current State:</span> {cell.current_state}</p>
 
       {myOptions.length > 0 && (
-        <div style={{ border: '1px solid #ccc', padding: '15px', marginTop: '20px' }}>
-          <h3>Update State</h3>
-          <form onSubmit={handleUpdateState}>
-            <select
-              value={newState}
-              onChange={(e) => setNewState(e.target.value)}
-              required
-              style={{ marginRight: '10px' }}
-            >
+        <div style={{ ...cardStyle, marginTop: '20px' }}>
+          <h3 style={{ marginTop: 0, fontSize: '15px' }}>Update State</h3>
+          <form onSubmit={handleUpdateState} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <select value={newState} onChange={(e) => setNewState(e.target.value)} required>
               <option value="">Select new state</option>
               {myOptions.map((option) => (
                 <option key={option} value={option}>{option}</option>
@@ -209,31 +189,31 @@ function CellDetail() {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               required
-              style={{ width: '300px', marginRight: '10px' }}
+              style={{ width: '280px' }}
             />
 
-            <button type="submit" disabled={updating}>
+            <button type="submit" disabled={updating} className="btn-primary">
               {updating ? 'Updating...' : 'Update'}
             </button>
           </form>
         </div>
       )}
 
-      <h2 style={{ marginTop: '30px' }}>Timeline</h2>
+      <h2 style={{ marginTop: '32px', fontSize: '16px' }}>Timeline</h2>
       <div>
         {history.map((event) => (
           <div
             key={event.id}
             style={{
-              borderLeft: '3px solid #4caf50',
+              borderLeft: '3px solid var(--accent)',
               paddingLeft: '15px',
               marginBottom: '15px'
             }}
           >
-            <p><strong>{event.event_type}</strong> — {new Date(event.created_at).toLocaleString()}</p>
-            <p>{event.changed_from ? `${event.changed_from} → ${event.changed_to}` : event.changed_to}</p>
-            <p>By: {event.operator_name}</p>
-            <p>Notes: {event.notes}</p>
+            <p style={{ margin: '0 0 4px' }}><strong>{event.event_type}</strong> — <span style={{ color: 'var(--text-secondary)' }}>{new Date(event.created_at).toLocaleString()}</span></p>
+            <p style={{ margin: '0 0 4px' }}>{event.changed_from ? `${event.changed_from} → ${event.changed_to}` : event.changed_to}</p>
+            <p style={{ margin: '0 0 4px', color: 'var(--text-secondary)' }}>By: {event.operator_name}</p>
+            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Notes: {event.notes}</p>
           </div>
         ))}
       </div>

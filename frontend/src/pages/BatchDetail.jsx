@@ -3,15 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
-// Color coding per state, similar idea to the timeline event colors
 const STATE_COLORS = {
-  Received: '#999',
-  'Incoming QC': '#2196f3',
-  Storage: '#9c27b0',
-  'Under Test': '#ff9800',
-  Passed: '#4caf50',
-  Failed: '#f44336',
-  Disposed: '#000'
+  Received: '#6E6E73',
+  'Incoming QC': '#FF9500',
+  Storage: '#0A84FF',
+  'Under Test': '#FF9500',
+  Passed: '#1E8E3E',
+  Failed: '#D70015',
+  Disposed: '#AEAEB2'
 };
 
 function BatchDetail() {
@@ -44,43 +43,42 @@ function BatchDetail() {
   };
 
   if (user?.role !== 'admin') {
-    return <p>You do not have permission to view this page.</p>;
+    return <p style={{ color: 'var(--text-secondary)' }}>You do not have permission to view this page.</p>;
   }
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  if (loading) return <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>;
+  if (error) return <p style={{ color: 'var(--state-danger)' }}>{error}</p>;
 
-  // Get all states that actually have cells in this batch
   const states = Object.keys(grouped);
 
   return (
     <div>
-      <button onClick={() => navigate('/dashboard')}>← Back to Dashboard</button>
+      <button onClick={() => navigate('/dashboard')} style={{ marginBottom: '16px' }}>← Back to Dashboard</button>
 
-      <h1>{batch.batch_number}</h1>
-      <p><strong>Supplier:</strong> {batch.supplier}</p>
-      <p><strong>Total Quantity:</strong> {batch.total_quantity}</p>
+      <h1 className="mono">{batch.batch_number}</h1>
+      <p><span style={{ color: 'var(--text-secondary)' }}>Supplier:</span> {batch.supplier}</p>
+      <p><span style={{ color: 'var(--text-secondary)' }}>Total Quantity:</span> {batch.total_quantity}</p>
 
-      {states.length === 0 && <p>No cells found in this batch.</p>}
+      {states.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>No cells found in this batch.</p>}
 
       {states.map((state) => (
-        <div key={state} style={{ marginTop: '25px' }}>
-          <h3 style={{ color: STATE_COLORS[state] || '#000' }}>
+        <div key={state} style={{ marginTop: '28px' }}>
+          <h3 style={{ color: STATE_COLORS[state] || 'var(--text-primary)', fontSize: '14px', fontWeight: 600 }}>
             {state} ({grouped[state].length})
           </h3>
 
-          <table border="1" cellPadding="6" style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr>
                 <th>Cell Code</th>
                 <th>Model</th>
-                <th>Action</th>
+                <th style={{ cursor: 'default' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {grouped[state].map((cell) => (
                 <tr key={cell.id}>
-                  <td>{cell.cell_code}</td>
+                  <td className="mono">{cell.cell_code}</td>
                   <td>{cell.model}</td>
                   <td>
                     <button onClick={() => navigate(`/cells/${cell.id}`)}>
