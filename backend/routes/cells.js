@@ -2,25 +2,10 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { verifyToken, requireRole } = require('../middleware/auth');
+const { checkStateTransition } = require('../guardrails/stateTransition');
 
 // ── Role-based permissions ──────────────────────────────
-
-// Which states each role can transition TO (and FROM)
-const allowedTransitions = {
-  quality_engineer: {
-    'Received': ['Incoming QC', 'Failed']
-  },
-  warehouse_staff: {
-    'Incoming QC': ['Storage']
-  },
-  lab_operator: {
-    'Storage': ['Under Test'],
-    'Under Test': ['Passed', 'Failed']
-  },
-  disposal_manager: {
-    'Failed': ['Disposed']
-  }
-};
+// (状态转移规则现在统一定义在 guardrails/stateTransition.js 里)
 
 // Which states each role can SEE
 const visibleStates = {
@@ -298,37 +283,35 @@ router.patch('/:id/state', verifyToken, async (req, res) => {
     const { new_state, notes } = req.body;
     const operator_id = req.user.id;
     const role = req.user.role;
+    const cellId = req.params.id;
 
-    if (!new_state || !notes) {
-      return res.status(400).json({ success: false, message: 'new_state and notes are required' });
-    }
-
-    // Get current state first — we need it to check the FROM → TO rule
-    const [cells] = await db.query('SELECT current_state FROM cells WHERE id = ?', [req.params.id]);
-    if (cells.length === 0) {
-      return res.status(404).json({ success: false, message: 'Cell not found' });
-    }
-    const previous_state = cells[0].current_state;
-
-    // Check if this role is allowed to move FROM the current state TO the new state
-    const roleRules = allowedTransitions[role];
-    const allowedTargets = roleRules ? roleRules[previous_state] : undefined;
-
-    if (!allowedTargets || !allowedTargets.includes(new_state)) {
-      return res.status(403).json({
+    if (!notes) {
+      return res.status(400).json({
         success: false,
-        message: `${role} cannot change state from ${previous_state} to ${new_state}`
+        error_code: 'MISSING_FIELDS',
+        message: 'notes is required'
       });
     }
 
+    // 把校验工作完全交给 Guardrail 模块，这里不再自己写 if/else 判断规则
+    const check = await checkStateTransition({ cellId, role, newState: new_state });
+
+    if (!check.allowed) {
+      // CELL_NOT_FOUND → 404，其他校验失败 → 403
+      const statusCode = check.error_code === 'CELL_NOT_FOUND' ? 404 : 403;
+      return res.status(statusCode).json({ success: false, ...check });
+    }
+
+    const previous_state = check.previousState;
+
     // Update cell state
-    await db.query('UPDATE cells SET current_state = ? WHERE id = ?', [new_state, req.params.id]);
+    await db.query('UPDATE cells SET current_state = ? WHERE id = ?', [new_state, cellId]);
 
     // Auto write audit log
     await db.query(
       `INSERT INTO cell_audit_logs (cell_id, operator_id, event_type, changed_from, changed_to, notes)
        VALUES (?, ?, 'Status_Change', ?, ?, ?)`,
-      [req.params.id, operator_id, previous_state, new_state, notes]
+      [cellId, operator_id, previous_state, new_state, notes]
     );
 
     res.json({ success: true, message: `State updated: ${previous_state} → ${new_state}` });
