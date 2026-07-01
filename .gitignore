@@ -18,3 +18,7 @@ node_modules/
 *.http
 
 NOTES.md
+
+# RAG：PDF文件和向量数据库不上传（体积大，任何人可自行下载）
+backend/rag/*.pdf
+backend/rag/chroma_db/
