@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { verifyToken, requireRole } = require('../middleware/auth');
+const { detectAnomalies } = require('../agent/anomalyDetection');
 
 // ── POST /api/metrics/import ──────────────────────────────
 // Bulk import battery test telemetry (voltage, internal resistance,
@@ -107,6 +108,39 @@ router.get('/:cellCode', verifyToken, async (req, res) => {
     );
 
     res.json({ success: true, data: rows });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ── GET /api/metrics/:cellCode/anomalies ──────────────────────
+// 查这个电池的全部测试历史，跑一遍异常检测规则，返回发现的异常列表。
+// 这是给将来 Agent 用的"眼睛"——它不直接操作数据库，只读取+分析。
+router.get('/:cellCode/anomalies', verifyToken, async (req, res) => {
+  try {
+    const [cells] = await db.query('SELECT id FROM cells WHERE cell_code = ?', [req.params.cellCode]);
+
+    if (cells.length === 0) {
+      return res.status(404).json({ success: false, message: 'Cell not found' });
+    }
+
+    const [rows] = await db.query(
+      `SELECT * FROM cell_metrics_data WHERE cell_id = ? ORDER BY test_timestamp ASC`,
+      [cells[0].id]
+    );
+
+    const anomalies = detectAnomalies(rows);
+
+    res.json({
+      success: true,
+      data: {
+        cell_code: req.params.cellCode,
+        total_records: rows.length,
+        anomaly_count: anomalies.length,
+        anomalies
+      }
+    });
 
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
