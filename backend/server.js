@@ -7,6 +7,7 @@ const cellsRouter = require('./routes/cells');       // Cells routes
 const batchesRouter = require('./routes/batches');   // Batches routes
 const auditRouter = require('./routes/audit');       // Audit logs routes
 const metricsRouter = require('./routes/metrics');   // Battery test telemetry routes
+const { router: agentRouter } = require('./routes/agent'); // Agent & RAG routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,7 @@ app.use('/api/cells', cellsRouter);
 app.use('/api/batches', batchesRouter);
 app.use('/api/audit', auditRouter);
 app.use('/api/metrics', metricsRouter);
+app.use('/api/agent', agentRouter);
 
 // ── Health Check ────────────────────────────────────────
 app.get('/health', (req, res) => {
