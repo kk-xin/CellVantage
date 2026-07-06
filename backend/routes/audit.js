@@ -20,15 +20,37 @@ router.get('/', verifyToken, requireRole('admin'), async (req, res) => {
 });
 
 
-// ── GET /api/audit/cell/:cell_id ────────────────────────
+// ── GET /api/audit/cell/:identifier ────────────────────────
 // Get audit logs for a specific cell — all roles can view
-router.get('/cell/:cell_id', verifyToken, async (req, res) => {
+// :identifier 支持两种格式：数字 cell_id 或 cell_code 字符串（如 LGES-2026-0003）
+router.get('/cell/:identifier', verifyToken, async (req, res) => {
   try {
+    const { identifier } = req.params;
+
+    // 判断是数字 ID 还是 cell_code 字符串
+    const isNumericId = /^\d+$/.test(identifier);
+
+    let cellId;
+
+    if (isNumericId) {
+      cellId = identifier;
+    } else {
+      // 用 cell_code 查出对应的 cell_id
+      const [cells] = await db.query(
+        'SELECT id FROM cells WHERE cell_code = ?',
+        [identifier]
+      );
+      if (cells.length === 0) {
+        return res.status(404).json({ success: false, message: `Cell "${identifier}" not found` });
+      }
+      cellId = cells[0].id;
+    }
+
     const [rows] = await db.query(
       `SELECT * FROM v_cell_complete_history
        WHERE cell_id = ?
        ORDER BY created_at ASC`,
-      [req.params.cell_id]
+      [cellId]
     );
 
     if (rows.length === 0) {
