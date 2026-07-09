@@ -9,6 +9,7 @@ import CellImport from './pages/CellImport';
 import Navbar from './components/Navbar';
 import UserManagement from './pages/UserManagement';
 import BatchDetail from './pages/BatchDetail';
+import AgentCopilot from './components/AgentCopilot';
 import './App.css';
 
 // Wrapper component — only allow access if user is logged in
@@ -93,6 +94,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/register" element={<Register />} />
       </Routes>
+       <AgentCopilot />
     </div>
   );
 }
