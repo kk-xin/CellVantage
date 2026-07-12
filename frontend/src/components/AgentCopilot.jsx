@@ -136,7 +136,7 @@ function MessageBubble({ msg }) {
 function WELCOME_MSG(username) {
   return {
     role: 'agent',
-    content: `Hi${username ? ' ' + username : ''}! I'm your CellVantage Agent.\n\nYou can ask me to:\n• analyze <cell_code>\n• query <spec question>\n\nTry: "analyze LGES-2026-0003"`
+    content: `Hi${username ? ' ' + username : ''}! I'm your CellVantage Agent.\n\n⚡ What I can do:\n• analyze <cell_code> — run anomaly detection (lab_operator only, cell must be Under Test)\n• query <spec question> — search the USABC battery spec\n\nExamples:\n  analyze SIM-0081\n  query safe temperature limits for cycle testing`
   };
 }
 
@@ -283,13 +283,22 @@ export default function AgentCopilot() {
       const actionResult = await runAgentAction(text, token);
       const agentMsg = {
         role: 'agent',
-        content: actionResult || "I can help you:\n• analyze <cell_code> — run anomaly detection\n• query <question> — search the USABC spec"
+        content: actionResult || "I can help you:\n• analyze <cell_code> — anomaly detection (lab_operator, Under Test cells only)\n• query <question> — search the USABC spec\n\nExample: analyze SIM-0081"
       };
       const final = { ...updatedWithUser, messages: [...updatedWithUser.messages, agentMsg] };
       setCurrentSession(final);
       saveCurrentSession(final);
     } catch (err) {
-      const errMsg = { role: 'agent', content: `Error: ${err.response?.data?.message || err.message}` };
+      const serverMsg = err.response?.data?.message;
+      const errorCode = err.response?.data?.error_code;
+
+      let content;
+      if (errorCode === 'INVALID_CELL_STATE') {
+        content = `⚠️ ${serverMsg}\n\nWorkflow reminder:\nReceived → Incoming QC → Storage → Under Test → Agent can analyze here`;
+      } else {
+        content = `Error: ${serverMsg || err.message}`;
+      }
+      const errMsg = { role: 'agent', content };
       const final = { ...updatedWithUser, messages: [...updatedWithUser.messages, errMsg] };
       setCurrentSession(final);
       saveCurrentSession(final);
@@ -371,7 +380,7 @@ export default function AgentCopilot() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder='analyze LGES-2026-0003  or  query cutoff voltage...'
+          placeholder='analyze SIM-0081  or  query cutoff voltage...'
           rows={2}
           style={{
             flex: 1, resize: 'none', border: '1px solid #E5E5EA',
