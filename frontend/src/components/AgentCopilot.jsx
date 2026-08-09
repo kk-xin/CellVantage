@@ -17,8 +17,8 @@ const I18N = {
     historyLabel: 'HISTORY',
     placeholder:'analyze SIM-0081  or  query cutoff voltage...',
     langLabel:  'EN',
-    fallback: "I can help you:\n• analyze <cell_code> — anomaly detection (lab_operator, Under Test only)\n• query <question> — search USABC spec\n• status <cell_code> — check current state\n• history <cell_code> — view test summary",
-    welcome: (u) => `Hi${u ? ' ' + u : ''}! I'm your CellVantage Agent.\n\n⚡ What I can do:\n• analyze <cell_code> — anomaly detection (lab_operator only)\n• query <question> — search USABC spec\n• status <cell_code> — check cell state\n• history <cell_code> — view test summary\n\nExample: analyze SIM-0081`,
+    fallback: "I can help you:\n• analyze <cell_code> — anomaly detection (lab_operator, Under Test only)\n• query <question> — search USABC spec\n• status <cell_code> — check current state\n• history <cell_code> — view test summary\n• list failed — list all Failed cells\n• list under test — list all Under Test cells\n• help — show full command list",
+    welcome: (u) => `Hi${u ? ' ' + u : ''}! I'm your CellVantage Agent.\n\n⚡ What I can do:\n• analyze <cell_code> — anomaly detection (lab_operator only)\n• query <question> — search USABC spec\n• status <cell_code> — check cell state\n• history <cell_code> — view test summary\n• list failed / list under test — filter cells by state\n• help — show full command list\n\nExample: analyze SIM-0081`,
     statusResult: (code, state) => `Cell ${code} is currently in:\n\n📍 ${state}`,
     statusNotFound: (code) => `Cell ${code} not found.`,
     historyResult: (code, rows) => {
@@ -37,6 +37,11 @@ const I18N = {
     actionBlocked: (role, from, to) => `🚫 Action blocked: your role (${role}) does not have permission to change state from ${from} to ${to}.`,
     actionTaken: (a) => `✅ Action: ${a}`,
     noChange: 'No state change was needed.',
+    helpBody: "⚡ Full command list:\n\n• analyze <cell_code> — anomaly detection (lab_operator, Under Test only)\n• query <question> — search USABC spec\n• status <cell_code> — check current state\n• history <cell_code> — view test summary\n• list failed — list all Failed cells\n• list under test — list all Under Test cells\n• help — show this list",
+    listResult: (label, cells) => cells.length === 0
+      ? `No cells found in ${label} state.`
+      : `${label} cells (${cells.length}):\n\n` + cells.map(c => `• ${c.cell_code}`).join('\n'),
+    stateLabels: { Failed: 'Failed', 'Under Test': 'Under Test' },
   },
   zh: {
     title:      'CellVantage 智能助手',
@@ -48,8 +53,8 @@ const I18N = {
     historyLabel: '历史记录',
     placeholder:'分析 SIM-0081  或  查询截止电压...',
     langLabel:  '中',
-    fallback: "我可以帮你：\n• 分析 <电池编号> — 异常检测（仅限 lab_operator，须为 Under Test 状态）\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看当前状态\n• 历史 <电池编号> — 查看测试数据摘要",
-    welcome: (u) => `你好${u ? ' ' + u : ''}！我是 CellVantage 智能助手。\n\n⚡ 我能做什么：\n• 分析 <电池编号> — 异常检测（仅限 lab_operator）\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看电池当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n\n示例：分析 SIM-0081`,
+    fallback: "我可以帮你：\n• 分析 <电池编号> — 异常检测（仅限 lab_operator，须为 Under Test 状态）\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n• 列出失败的电池 — 查看所有 Failed 电池\n• 列出测试中的电池 — 查看所有 Under Test 电池\n• 帮助 — 显示完整指令列表",
+    welcome: (u) => `你好${u ? ' ' + u : ''}！我是 CellVantage 智能助手。\n\n⚡ 我能做什么：\n• 分析 <电池编号> — 异常检测（仅限 lab_operator）\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看电池当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n• 列出失败的电池 / 列出测试中的电池 — 按状态筛选\n• 帮助 — 显示完整指令列表\n\n示例：分析 SIM-0081`,
     statusResult: (code, state) => `电池 ${code} 当前状态：\n\n📍 ${state}`,
     statusNotFound: (code) => `未找到电池 ${code}。`,
     historyResult: (code, rows) => {
@@ -68,6 +73,11 @@ const I18N = {
     actionBlocked: (role, from, to) => `🚫 操作被拦截：角色 ${role} 无权将状态从 ${from} 改为 ${to}。`,
     actionTaken: (a) => `✅ 操作：${a}`,
     noChange: '无需变更状态。',
+    helpBody: "⚡ 完整指令列表：\n\n• 分析 <电池编号> — 异常检测（仅限 lab_operator，须为 Under Test 状态）\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n• 列出失败的电池 — 查看所有 Failed 电池\n• 列出测试中的电池 — 查看所有 Under Test 电池\n• 帮助 — 显示此列表",
+    listResult: (label, cells) => cells.length === 0
+      ? `未找到 ${label} 状态的电池。`
+      : `${label} 电池（共 ${cells.length} 个）：\n\n` + cells.map(c => `• ${c.cell_code}`).join('\n'),
+    stateLabels: { Failed: '已失败', 'Under Test': '测试中' },
   },
   de: {
     title:      'CellVantage Agent',
@@ -79,8 +89,8 @@ const I18N = {
     historyLabel: 'VERLAUF',
     placeholder:'analysiere SIM-0081  oder  suche Abschlussspannung...',
     langLabel:  'DE',
-    fallback: "Ich kann helfen:\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator)\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — aktuellen Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen",
-    welcome: (u) => `Hallo${u ? ' ' + u : ''}! Ich bin dein CellVantage Agent.\n\n⚡ Was ich kann:\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator)\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n\nBeispiel: analysiere SIM-0081`,
+    fallback: "Ich kann helfen:\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator)\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — aktuellen Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n• liste fehlgeschlagen — alle Failed-Zellen anzeigen\n• liste im test — alle Under Test-Zellen anzeigen\n• hilfe — vollständige Befehlsliste anzeigen",
+    welcome: (u) => `Hallo${u ? ' ' + u : ''}! Ich bin dein CellVantage Agent.\n\n⚡ Was ich kann:\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator)\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n• liste fehlgeschlagen / liste im test — nach Zustand filtern\n• hilfe — vollständige Befehlsliste\n\nBeispiel: analysiere SIM-0081`,
     statusResult: (code, state) => `Zelle ${code} hat aktuell den Zustand:\n\n📍 ${state}`,
     statusNotFound: (code) => `Zelle ${code} nicht gefunden.`,
     historyResult: (code, rows) => {
@@ -99,6 +109,11 @@ const I18N = {
     actionBlocked: (role, from, to) => `🚫 Aktion blockiert: Rolle ${role} hat keine Berechtigung, den Zustand von ${from} auf ${to} zu ändern.`,
     actionTaken: (a) => `✅ Aktion: ${a}`,
     noChange: 'Keine Zustandsänderung erforderlich.',
+    helpBody: "⚡ Vollständige Befehlsliste:\n\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator, nur Under Test)\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — aktuellen Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n• liste fehlgeschlagen — alle Failed-Zellen anzeigen\n• liste im test — alle Under Test-Zellen anzeigen\n• hilfe — diese Liste anzeigen",
+    listResult: (label, cells) => cells.length === 0
+      ? `Keine Zellen im Zustand ${label} gefunden.`
+      : `${label}-Zellen (${cells.length}):\n\n` + cells.map(c => `• ${c.cell_code}`).join('\n'),
+    stateLabels: { Failed: 'Fehlgeschlagen', 'Under Test': 'Im Test' },
   }
 };
 
@@ -110,6 +125,14 @@ function extractCellCode(input) {
 
 function detectIntent(input) {
   const lower = input.toLowerCase();
+  // help 优先判断，避免被其他关键词抢先匹配
+  if (/\b(help|hilfe|帮助|指令|命令列表)\b/.test(lower)) return 'help';
+  // list failed / 列出失败 / liste fehlgeschlagen
+  if (/\b(list|liste|列出|查看所有)\b.*\b(failed|fehlgeschlagen|失败)\b/.test(lower) ||
+      /\b(failed|fehlgeschlagen|失败)\b.*\b(list|liste|列出|电池)\b/.test(lower)) return 'list_failed';
+  // list under test / 列出测试中 / liste im test
+  if (/\b(list|liste|列出|查看所有)\b.*\b(under test|im test|测试中)\b/.test(lower) ||
+      /\b(under test|im test|测试中)\b.*\b(list|liste|列出|电池)\b/.test(lower)) return 'list_under_test';
   if (/\b(analyze|analyse|analysiere|prüfe|分析|检查|检测|有问题吗|看看)\b/.test(lower)) return 'analyze';
   if (/\b(query|search|suche|was ist|what is|look up|find|查询|查找|什么是|说明书|规定|标准)\b/.test(lower)) return 'query';
   if (/\b(history|verlauf|历史|测试记录|测试历史|记录)\b/.test(lower)) return 'history';
@@ -128,6 +151,25 @@ async function runAgentAction(input, token, t) {
   const intent = detectIntent(input);
   const cellCode = extractCellCode(input);
   const headers = { Authorization: `Bearer ${token}` };
+
+  // ── help ────────────────────────────────────────────────
+  if (intent === 'help') {
+    return t.helpBody;
+  }
+
+  // ── list failed ─────────────────────────────────────────
+  if (intent === 'list_failed') {
+    const res = await axios.get(`${API}/api/cells`, { headers });
+    const cells = (res.data.data || []).filter(c => c.current_state === 'Failed');
+    return t.listResult(t.stateLabels.Failed, cells);
+  }
+
+  // ── list under test ─────────────────────────────────────
+  if (intent === 'list_under_test') {
+    const res = await axios.get(`${API}/api/cells`, { headers });
+    const cells = (res.data.data || []).filter(c => c.current_state === 'Under Test');
+    return t.listResult(t.stateLabels['Under Test'], cells);
+  }
 
   // ── analyze ─────────────────────────────────────────────
   if (intent === 'analyze' && cellCode) {
@@ -156,7 +198,9 @@ async function runAgentAction(input, token, t) {
   }
 
   // ── query spec ──────────────────────────────────────────
-  if (intent === 'query' || (!intent && !cellCode)) {
+  // 只有明确识别出"query"意图时才去检索说明书，
+  // 不再对"什么都识别不出来"的输入盲目当作查询（避免返回无意义的乱码片段）
+  if (intent === 'query') {
     const question = extractQuery(input);
     const res = await axios.post(`${API}/api/agent/query`, { question }, { headers });
     const results = res.data.results || [];
@@ -231,7 +275,7 @@ function MessageBubble({ msg }) {
 // ── 主组件 ─────────────────────────────────────────────────
 export default function AgentCopilot() {
   const { token, user } = useAuth();
-  const { lang } = useLang();  // 读全局语言，由导航栏统一切换
+  const { lang } = useLang();
 
   const [mode, setMode] = useState('ball');
   const [view, setView] = useState('chat');
@@ -252,7 +296,6 @@ export default function AgentCopilot() {
 
   const t = I18N[lang];
 
-  // lang 变化时，如果当前 session 只有欢迎语（用户还没发消息），就更新欢迎语
   useEffect(() => {
     if (!user || !currentSession) return;
     const hasUserMsg = currentSession.messages.some(m => m.role === 'user');
@@ -379,7 +422,12 @@ export default function AgentCopilot() {
     }
   };
 
-  const onKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
+  const onKeyDown = (e) => {
+    // isComposing / keyCode 229 表示输入法正在选字（比如拼音候选词还没确认）
+    // 这种情况下的回车是"确认选字"，不应该触发发送
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  };
   const onBallMouseDown = (e) => {
     dragging.current = true; didDrag.current = false;
     dragOffset.current = { x: e.clientX - ballPos.x, y: e.clientY - ballPos.y };
@@ -391,7 +439,6 @@ export default function AgentCopilot() {
     e.preventDefault();
   };
 
-  // ── 历史列表 ──────────────────────────────────────────
   const historyList = (small) => (
     <div style={{ flex: 1, overflowY: 'auto', padding: small ? '12px' : '0 8px 12px' }}>
       {sessions.length === 0 ? (
@@ -416,7 +463,6 @@ export default function AgentCopilot() {
     </div>
   );
 
-  // ── 聊天区域 ──────────────────────────────────────────
   const chatView = (
     <>
       <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column' }}>
@@ -445,7 +491,6 @@ export default function AgentCopilot() {
     </>
   );
 
-  // ── 标题栏 ────────────────────────────────────────────
   const titleBar = (draggable, onDblClick) => (
     <div onMouseDown={draggable ? onWinMouseDown : undefined} onDoubleClick={onDblClick}
       style={{ background: '#1D1D1F', padding: '10px 14px',
@@ -473,7 +518,6 @@ export default function AgentCopilot() {
     </div>
   );
 
-  // ── 浮球 ──────────────────────────────────────────────
   if (mode === 'ball') {
     return (
       <div onMouseDown={onBallMouseDown} onClick={() => { if (!didDrag.current) setMode('window'); }}
@@ -485,7 +529,6 @@ export default function AgentCopilot() {
     );
   }
 
-  // ── 小窗 ──────────────────────────────────────────────
   if (mode === 'window') {
     return (
       <div style={{ position: 'fixed', left: winPos.x, top: winPos.y, width: 400, height: 560,
@@ -498,7 +541,6 @@ export default function AgentCopilot() {
     );
   }
 
-  // ── 全屏 ──────────────────────────────────────────────
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999,
       display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
