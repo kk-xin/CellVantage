@@ -28,35 +28,24 @@ On top of the core tracking system sits an **AI agent** that can:
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Frontend (React + Vite)                                 │
-│  ├─ Role-aware pages (Cells, Dashboard, Users, Import)    │
-│  ├─ AgentCopilot — draggable chat widget (ball/window/    │
-│  │  fullscreen), session history, i18n                    │
-│  └─ recharts — line charts (metrics), donut chart          │
-│     (state distribution)                                  │
-└───────────────────────┬─────────────────────────────────┘
-                         │ REST (axios + JWT)
-┌───────────────────────┴─────────────────────────────────┐
-│  Backend (Node.js + Express)                              │
-│  ├─ Guardrail middleware — validates every state          │
-│  │  transition against role rules, returns structured     │
-│  │  machine-readable errors                                │
-│  ├─ Anomaly detection — rule engine over telemetry         │
-│  ├─ Agent orchestration — 5-step decision chain            │
-│  │  (fetch → detect → retrieve → decide → log)             │
-│  └─ RAG bridge — spawns Python subprocess for retrieval    │
-└──────┬──────────────────────────────────┬───────────────┘
-       │                                   │
-┌──────┴──────┐                  ┌─────────┴──────────────┐
-│   MySQL      │                  │  Python RAG pipeline    │
-│  (cells,     │                  │  ├─ ChromaDB (vector     │
-│   metrics,   │                  │  │  store, page-by-page  │
-│   audit log, │                  │  │  ingestion)            │
-│   batches)   │                  │  └─ USABC Battery Test    │
-└─────────────┘                   │     Manual (public spec)  │
-                                   └───────────────────────────┘
+```mermaid
+flowchart TD
+    %% Custom styling to match monospace card layout
+    classDef boxStyle fill:#ffffff,stroke:#333333,stroke-width:1px,color:#000000,font-family:ui-monospace,SFMono-Regular,Consolas,monospace,text-align:left;
+
+    FE["<b>Frontend (React + Vite)</b><br/>├─ Role-aware pages (Cells, Dashboard, Users, Import)<br/>├─ AgentCopilot - draggable chat widget (ball/window/fullscreen), session history, i18n<br/>└─ recharts - line charts (metrics), donut chart (state distribution)"]
+    
+    BE["<b>Backend (Node.js + Express)</b><br/>├─ Guardrail middleware - validates every state transition against role rules, returns structured machine-readable errors<br/>├─ Anomaly detection - rule engine over telemetry<br/>├─ Agent orchestration - 5-step decision chain (fetch → detect → retrieve → decide → log)<br/>└─ RAG bridge - spawns Python subprocess for retrieval"]
+    
+    DB[("<b>MySQL</b><br/>(cells, metrics, audit log, batches)")]
+    
+    RAG["<b>Python RAG pipeline</b><br/>├─ ChromaDB (vector store, page-by-page ingestion)<br/>└─ USABC Battery Test Manual (public spec)"]
+
+    class FE,BE,DB,RAG boxStyle;
+
+    FE -->|"REST (axios + JWT)"| BE
+    BE --> DB
+    BE --> RAG
 ```
 
 ---
