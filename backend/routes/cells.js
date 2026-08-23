@@ -5,41 +5,21 @@ const { verifyToken, requireRole } = require('../middleware/auth');
 const { checkStateTransition } = require('../guardrails/stateTransition');
 
 // ── Role-based permissions ──────────────────────────────
-// (状态转移规则现在统一定义在 guardrails/stateTransition.js 里)
-
-// Which states each role can SEE
-const visibleStates = {
-  quality_engineer: ['Received'],
-  warehouse_staff: ['Incoming QC'],
-  lab_operator: ['Storage', 'Under Test'],
-  disposal_manager: ['Failed', 'Disposed'],
-  admin: null  // null = see everything
-};
+// (状态转移规则统一定义在 guardrails/stateTransition.js 里)
+//
+// 设计原则：可见性（能看到什么）对所有登录用户开放，
+// 权限只限制"操作"（能改什么），也就是只在 PATCH /:id/state 时
+// 通过 Guardrail 校验。这样不管哪个角色，都能追溯/复核任意电池的
+// 完整历史，不会出现"电池状态变了之后，之前处理过它的人就再也看不到"
+// 的情况。
 
 // ── GET /api/cells ──────────────────────────────────────
-// Get cells — each role only sees their relevant states
+// Get cells — visible to all logged-in users, regardless of role
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const role = req.user.role;
-    const stateFilter = visibleStates[role];
-
-    // If role has no defined visibility rule, they see nothing
-    if (stateFilter === undefined) {
-      return res.json({ success: true, data: [] });
-    }
-
-    let query = 'SELECT * FROM v_cells_with_batch';
-    let params = [];
-
-    if (stateFilter) {
-      const placeholders = stateFilter.map(() => '?').join(', ');
-      query += ` WHERE current_state IN (${placeholders})`;
-      params = stateFilter;
-    }
-
-    query += ' ORDER BY created_at DESC';
-
-    const [rows] = await db.query(query, params);
+    const [rows] = await db.query(
+      'SELECT * FROM v_cells_with_batch ORDER BY created_at DESC'
+    );
     res.json({ success: true, data: rows });
 
   } catch (error) {
@@ -51,12 +31,6 @@ router.get('/', verifyToken, async (req, res) => {
 // ── GET /api/cells/dashboard/summary ───────────────────
 // Get count of cells grouped by state
 // Must be defined before /:id to avoid routing conflict
-/*[
-  { "current_state": "Received",  "count": 10 },
-  { "current_state": "Passed",    "count": 5  },
-  { "current_state": "Failed",    "count": 2  }
-]*/
-
 router.get('/dashboard/summary', verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -98,7 +72,6 @@ router.patch('/:id', verifyToken, requireRole('quality_engineer'), async (req, r
   try {
     const { model, capacity_rated, voltage_nominal, manufacture_date } = req.body;
 
-    // Get the cell's current state first, so changed_to has a valid value
     const [cells] = await db.query('SELECT current_state FROM cells WHERE id = ?', [req.params.id]);
     if (cells.length === 0) {
       return res.status(404).json({ success: false, message: 'Cell not found' });
@@ -186,7 +159,6 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
     if (existingBatch.length > 0) {
       batchId = existingBatch[0].id;
     } else {
-      // Create batch with total_quantity = 0 for now, we'll update it after processing
       const [batchResult] = await db.query(
         `INSERT INTO batches (batch_number, supplier, total_quantity, delivery_date)
          VALUES (?, ?, ?, ?)`,
@@ -237,8 +209,6 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
       }
     }
 
-    // Now that we know exactly how many succeeded, update the batch's total_quantity
-    // If reusing an existing batch, add to its current total instead of overwriting
     await db.query(
       `UPDATE batches 
        SET total_quantity = total_quantity + ? 
@@ -246,7 +216,6 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
       [results.success.length, batchId]
     );
 
-    // If this was a newly created batch but zero cells succeeded, clean it up
     const isNewBatch = existingBatch.length === 0;
     if (isNewBatch && results.success.length === 0) {
       await db.query('DELETE FROM batches WHERE id = ?', [batchId]);
@@ -256,12 +225,6 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
         data: results
       });
     }
-
-    // Now that we know exactly how many succeeded, update the batch's total_quantity
-    await db.query(
-      `UPDATE batches SET total_quantity = total_quantity + ? WHERE id = ?`,
-      [results.success.length, batchId]
-    );
 
     res.status(207).json({
       success: true,
@@ -277,7 +240,7 @@ router.post('/import', verifyToken, requireRole('quality_engineer'), async (req,
 
 
 // ── PATCH /api/cells/:id/state ──────────────────────────
-// Update cell state — role-based permission
+// Update cell state — role-based permission (enforced by Guardrail)
 router.patch('/:id/state', verifyToken, async (req, res) => {
   try {
     const { new_state, notes } = req.body;
@@ -293,21 +256,17 @@ router.patch('/:id/state', verifyToken, async (req, res) => {
       });
     }
 
-    // 把校验工作完全交给 Guardrail 模块，这里不再自己写 if/else 判断规则
     const check = await checkStateTransition({ cellId, role, newState: new_state });
 
     if (!check.allowed) {
-      // CELL_NOT_FOUND → 404，其他校验失败 → 403
       const statusCode = check.error_code === 'CELL_NOT_FOUND' ? 404 : 403;
       return res.status(statusCode).json({ success: false, ...check });
     }
 
     const previous_state = check.previousState;
 
-    // Update cell state
     await db.query('UPDATE cells SET current_state = ? WHERE id = ?', [new_state, cellId]);
 
-    // Auto write audit log
     await db.query(
       `INSERT INTO cell_audit_logs (cell_id, operator_id, event_type, changed_from, changed_to, notes)
        VALUES (?, ?, 'Status_Change', ?, ?, ?)`,

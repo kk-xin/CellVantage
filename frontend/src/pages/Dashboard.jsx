@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LanguageContext';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const I18N = {
   en: {
@@ -17,6 +18,7 @@ const I18N = {
     view:         'View',
     loading:      'Loading dashboard...',
     error:        'Failed to load dashboard data',
+    total:        'Total cells',
     states: {
       'Received': 'Received', 'Incoming QC': 'Incoming QC', 'Storage': 'Storage',
       'Under Test': 'Under Test', 'Passed': 'Passed', 'Failed': 'Failed', 'Disposed': 'Disposed'
@@ -34,6 +36,7 @@ const I18N = {
     view:         '查看',
     loading:      '加载中...',
     error:        '加载仪表盘数据失败',
+    total:        '电池总数',
     states: {
       'Received': '已入库', 'Incoming QC': '质检中', 'Storage': '存储中',
       'Under Test': '测试中', 'Passed': '已通过', 'Failed': '已失败', 'Disposed': '已处置'
@@ -51,11 +54,23 @@ const I18N = {
     view:         'Ansehen',
     loading:      'Dashboard wird geladen...',
     error:        'Fehler beim Laden der Dashboard-Daten',
+    total:        'Zellen gesamt',
     states: {
       'Received': 'Empfangen', 'Incoming QC': 'Eingangs-QK', 'Storage': 'Lagerung',
       'Under Test': 'Im Test', 'Passed': 'Bestanden', 'Failed': 'Fehlgeschlagen', 'Disposed': 'Entsorgt'
     }
   }
+};
+
+// 跟 CellList 的状态徽章颜色保持一致，视觉上呼应
+const STATE_COLORS = {
+  'Received':     '#6E6E73',
+  'Incoming QC':  '#FF9500',
+  'Storage':      '#0A84FF',
+  'Under Test':   '#FF9500',
+  'Passed':       '#1E8E3E',
+  'Failed':       '#D70015',
+  'Disposed':     '#AEAEB2',
 };
 
 const thStyle = {
@@ -69,6 +84,60 @@ const tdStyle = {
   borderBottom: '1px solid var(--border-subtle)',
   fontSize: '14px'
 };
+
+function StateChart({ stateSummary, t }) {
+  if (!stateSummary || stateSummary.length === 0) return null;
+
+  const chartData = stateSummary.map(item => ({
+    name: t.states[item.current_state] || item.current_state,
+    rawState: item.current_state,
+    value: item.count
+  }));
+
+  const total = chartData.reduce((sum, d) => sum + d.value, 0);
+
+  return (
+    <div style={{
+      backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+      borderRadius: 'var(--radius-md)', padding: '16px 20px',
+      display: 'flex', alignItems: 'center', gap: '8px', minWidth: '280px'
+    }}>
+      <div style={{ width: 140, height: 140, flexShrink: 0 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={40}
+              outerRadius={65}
+              paddingAngle={2}
+            >
+              {chartData.map((entry, i) => (
+                <Cell key={i} fill={STATE_COLORS[entry.rawState] || '#8C96AC'} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px', fontSize: '12px' }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div>
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px' }}>{t.total}</p>
+        <p style={{ fontSize: '28px', fontWeight: 700, margin: '0 0 10px', color: 'var(--text-primary)' }}>{total}</p>
+        {chartData.map((d, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: STATE_COLORS[d.rawState] || '#8C96AC', flexShrink: 0 }} />
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{d.name}: {d.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Dashboard() {
   const { token } = useAuth();
@@ -109,6 +178,13 @@ function Dashboard() {
       <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '12px' }}>
         {t.cellsByState}
       </h2>
+
+      {/* 饼图 */}
+      <div style={{ marginBottom: '20px' }}>
+        <StateChart stateSummary={stateSummary} t={t} />
+      </div>
+
+      {/* 数字卡片（保留原有的，方便快速扫一眼具体数字） */}
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}>
         {stateSummary.map((item) => (
           <div key={item.current_state} style={{

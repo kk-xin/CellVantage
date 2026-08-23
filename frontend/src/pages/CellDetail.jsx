@@ -29,6 +29,7 @@ const I18N = {
     updating:         'Updating...',
     update:           'Update',
     timeline:         'Timeline',
+    noTimeline:       'No timeline events yet.',
     by:               'By',
     notes:            'Notes',
     loading:          'Loading...',
@@ -70,6 +71,7 @@ const I18N = {
     updating:         '更新中...',
     update:           '更新',
     timeline:         '时间线',
+    noTimeline:       '暂无时间线记录。',
     by:               '操作人',
     notes:            '备注',
     loading:          '加载中...',
@@ -111,6 +113,7 @@ const I18N = {
     updating:         'Aktualisierung...',
     update:           'Aktualisieren',
     timeline:         'Zeitverlauf',
+    noTimeline:       'Noch keine Zeitverlaufseinträge.',
     by:               'Von',
     notes:            'Notizen',
     loading:          'Wird geladen...',
@@ -379,18 +382,46 @@ function CellDetail() {
       )}
 
       <h2 style={{ marginTop: '32px', fontSize: '16px' }}>{t.timeline}</h2>
-      <div>
-        {history.map(event => (
-          <div key={event.id} style={{ borderLeft: '3px solid var(--accent)', paddingLeft: '15px', marginBottom: '15px' }}>
-            <p style={{ margin: '0 0 4px' }}>
-              <strong>{event.event_type}</strong> — <span style={{ color: 'var(--text-secondary)' }}>{new Date(event.created_at).toLocaleString()}</span>
-            </p>
-            <p style={{ margin: '0 0 4px' }}>{event.changed_from ? `${event.changed_from} → ${event.changed_to}` : event.changed_to}</p>
-            <p style={{ margin: '0 0 4px', color: 'var(--text-secondary)' }}>{t.by}: {event.operator_name}</p>
-            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{t.notes}: {event.notes}</p>
-          </div>
-        ))}
-      </div>
+      {history.length === 0 ? (
+        <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{t.noTimeline}</p>
+      ) : (
+        <div>
+          {history.map(event => {
+            // 判断这条时间线事件是否属于"异常/失败"类型：
+            //  - Agent 自动决策（Agent_Decision）
+            //  - 或者是变更到 Failed 状态的 Status_Change
+            const isAnomalyEvent =
+              event.event_type === 'Agent_Decision' ||
+              (event.event_type === 'Status_Change' && event.changed_to === 'Failed');
+
+            return (
+              <div key={event.id} style={{
+                position: 'relative',
+                borderLeft: `3px solid ${isAnomalyEvent ? 'var(--state-danger)' : 'var(--accent)'}`,
+                paddingLeft: '15px', marginBottom: '15px'
+              }}>
+                {/* 红点标记：用绝对定位的小圆点叠在时间线上，异常事件才显示 */}
+                {isAnomalyEvent && (
+                  <span style={{
+                    position: 'absolute', left: '-6px', top: '4px',
+                    width: '9px', height: '9px', borderRadius: '50%',
+                    backgroundColor: 'var(--state-danger)',
+                    border: '2px solid var(--bg-base)'
+                  }} />
+                )}
+                <p style={{ margin: '0 0 4px' }}>
+                  <strong>{event.event_type}</strong>
+                  {isAnomalyEvent && <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--state-danger)' }}>⚠</span>}
+                  {' '}— <span style={{ color: 'var(--text-secondary)' }}>{new Date(event.created_at).toLocaleString()}</span>
+                </p>
+                <p style={{ margin: '0 0 4px' }}>{event.changed_from ? `${event.changed_from} → ${event.changed_to}` : event.changed_to}</p>
+                <p style={{ margin: '0 0 4px', color: 'var(--text-secondary)' }}>{t.by}: {event.operator_name}</p>
+                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{t.notes}: {event.notes}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -17,8 +17,8 @@ const I18N = {
     historyLabel: 'HISTORY',
     placeholder:'analyze SIM-0081  or  query cutoff voltage...',
     langLabel:  'EN',
-    fallback: "I can help you:\n• analyze <cell_code> — anomaly detection (lab_operator, Under Test only)\n• query <question> — search USABC spec\n• status <cell_code> — check current state\n• history <cell_code> — view test summary\n• list failed — list all Failed cells\n• list under test — list all Under Test cells\n• help — show full command list",
-    welcome: (u) => `Hi${u ? ' ' + u : ''}! I'm your CellVantage Agent.\n\n⚡ What I can do:\n• analyze <cell_code> — anomaly detection (lab_operator only)\n• query <question> — search USABC spec\n• status <cell_code> — check cell state\n• history <cell_code> — view test summary\n• list failed / list under test — filter cells by state\n• help — show full command list\n\nExample: analyze SIM-0081`,
+    fallback: "I can help you:\n• analyze <cell_code> — anomaly detection (lab_operator, Under Test only)\n• analyze all under test — batch analyze all Under Test cells\n• query <question> — search USABC spec\n• status <cell_code> — check current state\n• history <cell_code> — view test summary\n• list failed — list all Failed cells\n• list under test — list all Under Test cells\n• help — show full command list",
+    welcome: (u) => `Hi${u ? ' ' + u : ''}! I'm your CellVantage Agent.\n\n⚡ What I can do:\n• analyze <cell_code> — anomaly detection (lab_operator only)\n• analyze all under test — batch analyze all Under Test cells\n• query <question> — search USABC spec\n• status <cell_code> — check cell state\n• history <cell_code> — view test summary\n• list failed / list under test — filter cells by state\n• help — show full command list\n\nExample: analyze SIM-0081`,
     statusResult: (code, state) => `Cell ${code} is currently in:\n\n📍 ${state}`,
     statusNotFound: (code) => `Cell ${code} not found.`,
     historyResult: (code, rows) => {
@@ -37,11 +37,21 @@ const I18N = {
     actionBlocked: (role, from, to) => `🚫 Action blocked: your role (${role}) does not have permission to change state from ${from} to ${to}.`,
     actionTaken: (a) => `✅ Action: ${a}`,
     noChange: 'No state change was needed.',
-    helpBody: "⚡ Full command list:\n\n• analyze <cell_code> — anomaly detection (lab_operator, Under Test only)\n• query <question> — search USABC spec\n• status <cell_code> — check current state\n• history <cell_code> — view test summary\n• list failed — list all Failed cells\n• list under test — list all Under Test cells\n• help — show this list",
+    helpBody: "⚡ Full command list:\n\n• analyze <cell_code> — anomaly detection (lab_operator, Under Test only)\n• analyze all under test — batch analyze all Under Test cells\n• query <question> — search USABC spec\n• status <cell_code> — check current state\n• history <cell_code> — view test summary\n• list failed — list all Failed cells\n• list under test — list all Under Test cells\n• help — show this list",
     listResult: (label, cells) => cells.length === 0
       ? `No cells found in ${label} state.`
       : `${label} cells (${cells.length}):\n\n` + cells.map(c => `• ${c.cell_code}`).join('\n'),
     stateLabels: { Failed: 'Failed', 'Under Test': 'Under Test' },
+    batchResult: (s) => {
+      if (s.total === 0) return 'No cells found to analyze.';
+      const lines = [`📦 Batch analysis complete — ${s.total} cell(s) checked:`, ''];
+      lines.push(`✅ Analyzed: ${s.analyzed}`);
+      lines.push(`🚫 Flagged Failed: ${s.flagged_failed}`);
+      lines.push(`✔️ No anomalies: ${s.no_anomalies}`);
+      if (s.skipped > 0) lines.push(`⏭️ Skipped (not Under Test): ${s.skipped}`);
+      if (s.errors > 0) lines.push(`⚠️ Errors: ${s.errors}`);
+      return lines.join('\n');
+    },
   },
   zh: {
     title:      'CellVantage 智能助手',
@@ -53,8 +63,8 @@ const I18N = {
     historyLabel: '历史记录',
     placeholder:'分析 SIM-0081  或  查询截止电压...',
     langLabel:  '中',
-    fallback: "我可以帮你：\n• 分析 <电池编号> — 异常检测（仅限 lab_operator，须为 Under Test 状态）\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n• 列出失败的电池 — 查看所有 Failed 电池\n• 列出测试中的电池 — 查看所有 Under Test 电池\n• 帮助 — 显示完整指令列表",
-    welcome: (u) => `你好${u ? ' ' + u : ''}！我是 CellVantage 智能助手。\n\n⚡ 我能做什么：\n• 分析 <电池编号> — 异常检测（仅限 lab_operator）\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看电池当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n• 列出失败的电池 / 列出测试中的电池 — 按状态筛选\n• 帮助 — 显示完整指令列表\n\n示例：分析 SIM-0081`,
+    fallback: "我可以帮你：\n• 分析 <电池编号> — 异常检测（仅限 lab_operator，须为 Under Test 状态）\n• 分析所有测试中的电池 — 批量分析所有 Under Test 电池\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n• 列出失败的电池 — 查看所有 Failed 电池\n• 列出测试中的电池 — 查看所有 Under Test 电池\n• 帮助 — 显示完整指令列表",
+    welcome: (u) => `你好${u ? ' ' + u : ''}！我是 CellVantage 智能助手。\n\n⚡ 我能做什么：\n• 分析 <电池编号> — 异常检测（仅限 lab_operator）\n• 分析所有测试中的电池 — 批量分析\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看电池当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n• 列出失败的电池 / 列出测试中的电池 — 按状态筛选\n• 帮助 — 显示完整指令列表\n\n示例：分析 SIM-0081`,
     statusResult: (code, state) => `电池 ${code} 当前状态：\n\n📍 ${state}`,
     statusNotFound: (code) => `未找到电池 ${code}。`,
     historyResult: (code, rows) => {
@@ -73,11 +83,21 @@ const I18N = {
     actionBlocked: (role, from, to) => `🚫 操作被拦截：角色 ${role} 无权将状态从 ${from} 改为 ${to}。`,
     actionTaken: (a) => `✅ 操作：${a}`,
     noChange: '无需变更状态。',
-    helpBody: "⚡ 完整指令列表：\n\n• 分析 <电池编号> — 异常检测（仅限 lab_operator，须为 Under Test 状态）\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n• 列出失败的电池 — 查看所有 Failed 电池\n• 列出测试中的电池 — 查看所有 Under Test 电池\n• 帮助 — 显示此列表",
+    helpBody: "⚡ 完整指令列表：\n\n• 分析 <电池编号> — 异常检测（仅限 lab_operator，须为 Under Test 状态）\n• 分析所有测试中的电池 — 批量分析所有 Under Test 电池\n• 查询 <问题> — 检索 USABC 说明书\n• 状态 <电池编号> — 查看当前状态\n• 历史 <电池编号> — 查看测试数据摘要\n• 列出失败的电池 — 查看所有 Failed 电池\n• 列出测试中的电池 — 查看所有 Under Test 电池\n• 帮助 — 显示此列表",
     listResult: (label, cells) => cells.length === 0
       ? `未找到 ${label} 状态的电池。`
       : `${label} 电池（共 ${cells.length} 个）：\n\n` + cells.map(c => `• ${c.cell_code}`).join('\n'),
     stateLabels: { Failed: '已失败', 'Under Test': '测试中' },
+    batchResult: (s) => {
+      if (s.total === 0) return '未找到需要分析的电池。';
+      const lines = [`📦 批量分析完成 — 共检查 ${s.total} 个电池：`, ''];
+      lines.push(`✅ 已分析：${s.analyzed}`);
+      lines.push(`🚫 标记为失败：${s.flagged_failed}`);
+      lines.push(`✔️ 无异常：${s.no_anomalies}`);
+      if (s.skipped > 0) lines.push(`⏭️ 已跳过（非测试中状态）：${s.skipped}`);
+      if (s.errors > 0) lines.push(`⚠️ 错误：${s.errors}`);
+      return lines.join('\n');
+    },
   },
   de: {
     title:      'CellVantage Agent',
@@ -89,8 +109,8 @@ const I18N = {
     historyLabel: 'VERLAUF',
     placeholder:'analysiere SIM-0081  oder  suche Abschlussspannung...',
     langLabel:  'DE',
-    fallback: "Ich kann helfen:\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator)\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — aktuellen Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n• liste fehlgeschlagen — alle Failed-Zellen anzeigen\n• liste im test — alle Under Test-Zellen anzeigen\n• hilfe — vollständige Befehlsliste anzeigen",
-    welcome: (u) => `Hallo${u ? ' ' + u : ''}! Ich bin dein CellVantage Agent.\n\n⚡ Was ich kann:\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator)\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n• liste fehlgeschlagen / liste im test — nach Zustand filtern\n• hilfe — vollständige Befehlsliste\n\nBeispiel: analysiere SIM-0081`,
+    fallback: "Ich kann helfen:\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator)\n• analysiere alle im test — Stapelanalyse aller Under Test-Zellen\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — aktuellen Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n• liste fehlgeschlagen — alle Failed-Zellen anzeigen\n• liste im test — alle Under Test-Zellen anzeigen\n• hilfe — vollständige Befehlsliste anzeigen",
+    welcome: (u) => `Hallo${u ? ' ' + u : ''}! Ich bin dein CellVantage Agent.\n\n⚡ Was ich kann:\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator)\n• analysiere alle im test — Stapelanalyse\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n• liste fehlgeschlagen / liste im test — nach Zustand filtern\n• hilfe — vollständige Befehlsliste\n\nBeispiel: analysiere SIM-0081`,
     statusResult: (code, state) => `Zelle ${code} hat aktuell den Zustand:\n\n📍 ${state}`,
     statusNotFound: (code) => `Zelle ${code} nicht gefunden.`,
     historyResult: (code, rows) => {
@@ -109,11 +129,21 @@ const I18N = {
     actionBlocked: (role, from, to) => `🚫 Aktion blockiert: Rolle ${role} hat keine Berechtigung, den Zustand von ${from} auf ${to} zu ändern.`,
     actionTaken: (a) => `✅ Aktion: ${a}`,
     noChange: 'Keine Zustandsänderung erforderlich.',
-    helpBody: "⚡ Vollständige Befehlsliste:\n\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator, nur Under Test)\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — aktuellen Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n• liste fehlgeschlagen — alle Failed-Zellen anzeigen\n• liste im test — alle Under Test-Zellen anzeigen\n• hilfe — diese Liste anzeigen",
+    helpBody: "⚡ Vollständige Befehlsliste:\n\n• analysiere <Zellcode> — Anomalieerkennung (nur lab_operator, nur Under Test)\n• analysiere alle im test — Stapelanalyse aller Under Test-Zellen\n• suche <Frage> — USABC-Spezifikation durchsuchen\n• status <Zellcode> — aktuellen Zustand prüfen\n• verlauf <Zellcode> — Testdaten anzeigen\n• liste fehlgeschlagen — alle Failed-Zellen anzeigen\n• liste im test — alle Under Test-Zellen anzeigen\n• hilfe — diese Liste anzeigen",
     listResult: (label, cells) => cells.length === 0
       ? `Keine Zellen im Zustand ${label} gefunden.`
       : `${label}-Zellen (${cells.length}):\n\n` + cells.map(c => `• ${c.cell_code}`).join('\n'),
     stateLabels: { Failed: 'Fehlgeschlagen', 'Under Test': 'Im Test' },
+    batchResult: (s) => {
+      if (s.total === 0) return 'Keine Zellen zum Analysieren gefunden.';
+      const lines = [`📦 Stapelanalyse abgeschlossen — ${s.total} Zelle(n) geprüft:`, ''];
+      lines.push(`✅ Analysiert: ${s.analyzed}`);
+      lines.push(`🚫 Als fehlgeschlagen markiert: ${s.flagged_failed}`);
+      lines.push(`✔️ Keine Anomalien: ${s.no_anomalies}`);
+      if (s.skipped > 0) lines.push(`⏭️ Übersprungen (nicht im Test): ${s.skipped}`);
+      if (s.errors > 0) lines.push(`⚠️ Fehler: ${s.errors}`);
+      return lines.join('\n');
+    },
   }
 };
 
@@ -127,6 +157,10 @@ function detectIntent(input) {
   const lower = input.toLowerCase();
   // help 优先判断，避免被其他关键词抢先匹配
   if (/\b(help|hilfe|帮助|指令|命令列表)\b/.test(lower)) return 'help';
+  // analyze all / 分析所有 / analysiere alle — 必须在 list_under_test 之前判断，
+  // 否则"分析所有测试中的电池"会先被 list_under_test 的正则截走
+  if (/\b(analyze|analyse|analysiere|分析|检测)\b.*\b(all|alle|所有)\b/.test(lower) ||
+      /\b(all|alle|所有)\b.*\b(analyze|analyse|analysiere|分析|检测)\b/.test(lower)) return 'analyze_batch';
   // list failed / 列出失败 / liste fehlgeschlagen
   if (/\b(list|liste|列出|查看所有)\b.*\b(failed|fehlgeschlagen|失败)\b/.test(lower) ||
       /\b(failed|fehlgeschlagen|失败)\b.*\b(list|liste|列出|电池)\b/.test(lower)) return 'list_failed';
@@ -155,6 +189,12 @@ async function runAgentAction(input, token, t) {
   // ── help ────────────────────────────────────────────────
   if (intent === 'help') {
     return t.helpBody;
+  }
+
+  // ── analyze all under test（批量分析）───────────────────
+  if (intent === 'analyze_batch') {
+    const res = await axios.post(`${API}/api/agent/analyze-batch`, {}, { headers });
+    return t.batchResult(res.data.summary);
   }
 
   // ── list failed ─────────────────────────────────────────
